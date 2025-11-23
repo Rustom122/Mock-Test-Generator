@@ -658,11 +658,12 @@
       });
     }
 
-    function classifySection(subject) {
-      const technical = ['DC Machines', 'Transformers', 'Induction Machines', 'Synchronous Machines', 
-                        'Special Machines', 'Power Systems', 'Control Systems', 'Measurements', 'Power Electronics'];
-      return technical.includes(subject) ? 'Technical' : 'Non-Technical';
-    }
+function classifySection(subject) {
+  if (!subject) return "Non-Technical";
+  const normalized = subject.trim().toLowerCase();
+  const nonTechnicalKeywords = ['aptitude', 'reasoning', 'general knowledge', 'general/mixed', 'english', 'verbal', 'quantitative', 'logical', 'gk'];
+  return nonTechnicalKeywords.some(keyword => normalized.includes(keyword)) ? "Non-Technical" : "Technical";
+}
 
     function filterQuestionsFullTest(all, techCount, nonTechCount, difficulties, questionTypes) {
       let techFiltered = all.filter(q => 
