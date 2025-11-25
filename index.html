@@ -353,7 +353,7 @@
 
       <button class="btn btn-full" onclick="startExam()">Start Exam</button>
 
-        <!-- Smart Footer -->
+        <!-- Smart Footer with Unique Visitor Counter -->
         <footer class="smart-footer" id="smart-footer">
             <div class="footer-flex">
                 <div class="visitor-counter">
@@ -396,11 +396,12 @@
             gap: 10px;
             font-size: 18px;
             color: var(--color-primary);
-            background: var(--color-bg-3);
             padding: 10px 20px;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xs);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             font-weight: 500;
+            background: linear-gradient(135deg, rgba(33,128,141,0.08) 0%, rgba(33,128,141,0.03) 100%);
+            border: 1px solid rgba(33,128,141,0.15);
         }
         .visitor-counter .visitor-number {
             margin: 0 8px 0 2px;
@@ -423,11 +424,12 @@
         .footer-contact {
             display: flex;
             align-items: center;
-            background: var(--color-bg-1);
             padding: 10px 20px;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xs);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             font-size: 16px;
+            background: linear-gradient(135deg, rgba(33,128,141,0.08) 0%, rgba(33,128,141,0.03) 100%);
+            border: 1px solid rgba(33,128,141,0.15);
         }
         .footer-contact .contact-label {
             font-weight: 500;
@@ -458,37 +460,62 @@
         </style>
 
         <script>
-        // Smart Visitor Counter -- persistent and reasonably tamper-resistant using fetch to an external simple counter API
-        // THIS IS ONLY FOR DEMO/TEST; for production, connect to your own backend, or use vercel/other-free-counter (CORS-safe)
+        // UNIQUE VISITOR COUNTER using CountAPI.xyz
+        // This increments ONCE per unique visitor and persists across all users globally
         async function updateVisitorCounter() {
             const el = document.getElementById('visitor-number');
-            // Demo public API (will usually work, low volume): https://api.countapi.xyz/
-            const key = "nrl-mock-exam-config-footer-v2";
+            if (!el) return;
+
+            const namespace = 'nrl-mock-platform';
+            const key = 'unique-visitors-v1';
+
             try {
-                let result = await fetch(`https://api.countapi.xyz/hit/nrlplatform.xyz/${key}?amount=1`);
-                let data = await result.json();
-                if (data && data.value) {
+                // Use CountAPI's 'update' endpoint which increments by 1 and returns the new count
+                // This is a global counter shared across ALL visitors
+                const response = await fetch(`https://api.countapi.xyz/update/${namespace}/${key}/?amount=1`);
+                const data = await response.json();
+
+                if (data && data.value !== undefined) {
                     el.textContent = data.value.toLocaleString();
                 } else {
-                    throw new Error("No value");
+                    throw new Error('Invalid response');
                 }
-            } catch {
-                // Fallback: demo client-side counter
-                let fallback = parseInt(localStorage.getItem('footerVisitorFallback') || "1", 10);
-                el.textContent = fallback.toLocaleString() + "+";
-                localStorage.setItem('footerVisitorFallback', (fallback + 1).toString());
+            } catch (error) {
+                console.error('Visitor counter error:', error);
+                // Fallback display
+                try {
+                    // Try to at least GET the current count without incrementing
+                    const getResponse = await fetch(`https://api.countapi.xyz/get/${namespace}/${key}`);
+                    const getData = await getResponse.json();
+                    if (getData && getData.value !== undefined) {
+                        el.textContent = getData.value.toLocaleString();
+                    } else {
+                        el.textContent = '---';
+                    }
+                } catch {
+                    el.textContent = '---';
+                }
             }
         }
-        if (window.location.hash === '#config' || window.location.pathname.includes('config')) {
-            updateVisitorCounter();
-        }
-        // Also in other cases, show count on config screen mount
-        document.addEventListener('DOMContentLoaded', function () {
-            const screen = document.getElementById('config-screen');
-            if (screen && (screen.classList.contains('active') || window.location.hash === '#config')) {
+
+        // Initialize counter when config screen is visible
+        document.addEventListener('DOMContentLoaded', function() {
+            const configScreen = document.getElementById('config-screen');
+            if (configScreen && configScreen.classList.contains('active')) {
                 updateVisitorCounter();
             }
         });
+
+        // Also update when explicitly shown
+        const originalShowScreen = window.showScreen;
+        if (typeof originalShowScreen === 'function') {
+            window.showScreen = function(screenId) {
+                originalShowScreen(screenId);
+                if (screenId === 'config-screen') {
+                    setTimeout(updateVisitorCounter, 100);
+                }
+            };
+        }
         </script>
 
     </div>
