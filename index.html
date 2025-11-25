@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Based Mock Test Platform (EE)</title>
+  <title>NRL Mock Test Platform - Enhanced</title>
   
   <!-- CDN Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -59,7 +59,35 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body { font-family: var(--font-family-base); background: var(--color-background); color: var(--color-text); overflow-x: hidden; height: 100%; }
 
-    .theme-toggle-btn { position: fixed; top: 20px; right: 20px; z-index: 10000; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-full); width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .theme-toggle-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-full);
+      width: 56px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+      font-size: 24px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      user-select: none;
+      will-change: transform;
+    }
+    .theme-toggle-btn.dragging {
+      cursor: grabbing;
+      transition: none;
+    }
+    .theme-toggle-btn:hover:not(.dragging) {
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25), 0 0 0 4px rgba(33,128,141,0.2);
+      border-color: var(--color-primary);
+    }
     .theme-toggle-btn:hover { transform: scale(1.1); }
 
     .screen { display: none; min-height: 100vh; padding: 20px; padding-top: 80px; }
@@ -235,7 +263,7 @@
 
         <div class="form-group">
           <label>Number of Technical Questions</label>
-          <input type="number" id="tech-questions-full" value="85" min="0">
+          <input type="number" id="tech-questions-full" value="45" min="0">
           <small style="color: var(--color-text-secondary); font-size: 12px;">Topics: DC Machines, Transformers, Power Systems, etc.</small>
         </div>
 
@@ -353,17 +381,18 @@
 
       <button class="btn btn-full" onclick="startExam()">Start Exam</button>
 
-        <!-- Smart Footer with Unique Visitor Counter -->
+        <!-- Smart Footer with Working Visitor Counter -->
         <footer class="smart-footer" id="smart-footer">
             <div class="footer-flex">
-                <div class="visitor-counter">
+                <div class="visitor-counter" id="visitor-counter-box">
                     <span class="visitor-icon" aria-label="Visitor Count">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                             <circle cx="12" cy="12" r="10" fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/>
                             <path d="M15.5 12a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z" stroke="var(--color-primary)" stroke-width="2" fill="none"/>
+                            <circle cx="12" cy="12" r="1.5" fill="var(--color-primary)"/>
                         </svg>
                     </span>
-                    <span class="visitor-number" id="visitor-number" style="font-weight: 600;">...</span>
+                    <span class="visitor-number" id="visitor-number">...</span>
                     <span class="visitor-label">total visitors</span>
                 </div>
                 <div class="footer-contact">
@@ -377,9 +406,9 @@
         .smart-footer {
             margin-top: 40px;
             padding: 28px 10px 22px 10px;
-            background: var(--color-surface);
+            background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-background) 100%);
             border-top: 2px solid var(--color-border);
-            box-shadow: 0 -2px 16px rgba(33,128,141,0.07);
+            box-shadow: 0 -2px 16px rgba(33,128,141,0.08);
             font-family: var(--font-family-base);
         }
         .footer-flex {
@@ -396,21 +425,55 @@
             gap: 10px;
             font-size: 18px;
             color: var(--color-primary);
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: var(--radius-lg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             font-weight: 500;
-            background: linear-gradient(135deg, rgba(33,128,141,0.08) 0%, rgba(33,128,141,0.03) 100%);
-            border: 1px solid rgba(33,128,141,0.15);
+            background: linear-gradient(135deg, rgba(33,128,141,0.12) 0%, rgba(33,128,141,0.05) 100%);
+            border: 2px solid rgba(33,128,141,0.2);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
         }
+
+        .visitor-counter::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(33,128,141,0.15);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        .visitor-counter:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        .visitor-counter:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 24px rgba(33,128,141,0.25), 0 0 0 4px rgba(33,128,141,0.1);
+            border-color: var(--color-primary);
+        }
+
+        .visitor-counter > * {
+            position: relative;
+            z-index: 1;
+        }
+
         .visitor-counter .visitor-number {
             margin: 0 8px 0 2px;
-            font-size: 22px;
+            font-size: 24px;
             color: var(--color-text);
             min-width: 30px;
             display: inline-block;
             letter-spacing: 1px;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
         .visitor-counter .visitor-label {
             font-size: 15px;
             color: var(--color-text-secondary);
@@ -420,16 +483,37 @@
             margin-right: 4px;
             display: flex;
             align-items: center;
+            animation: iconPulse 3s ease-in-out infinite;
         }
+
+        @keyframes iconPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .visitor-counter:hover .visitor-icon {
+            animation: iconSpin 1s linear infinite;
+        }
+
+        @keyframes iconSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .footer-contact {
             display: flex;
             align-items: center;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: var(--radius-lg);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             font-size: 16px;
             background: linear-gradient(135deg, rgba(33,128,141,0.08) 0%, rgba(33,128,141,0.03) 100%);
-            border: 1px solid rgba(33,128,141,0.15);
+            border: 2px solid rgba(33,128,141,0.15);
+            transition: all 0.3s ease;
+        }
+        .footer-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33,128,141,0.2);
+            border-color: var(--color-primary);
         }
         .footer-contact .contact-label {
             font-weight: 500;
@@ -440,10 +524,11 @@
             color: var(--color-primary);
             font-weight: 600;
             text-decoration: underline;
-            transition: color 0.2s;
+            transition: all 0.2s;
         }
         .footer-contact .contact-email:hover {
             color: var(--color-primary-hover);
+            text-shadow: 0 2px 4px rgba(33,128,141,0.3);
         }
 
         @media (max-width: 700px) {
@@ -458,65 +543,6 @@
             }
         }
         </style>
-
-        <script>
-        // UNIQUE VISITOR COUNTER using CountAPI.xyz
-        // This increments ONCE per unique visitor and persists across all users globally
-        async function updateVisitorCounter() {
-            const el = document.getElementById('visitor-number');
-            if (!el) return;
-
-            const namespace = 'nrl-mock-platform';
-            const key = 'unique-visitors-v1';
-
-            try {
-                // Use CountAPI's 'update' endpoint which increments by 1 and returns the new count
-                // This is a global counter shared across ALL visitors
-                const response = await fetch(`https://api.countapi.xyz/update/${namespace}/${key}/?amount=1`);
-                const data = await response.json();
-
-                if (data && data.value !== undefined) {
-                    el.textContent = data.value.toLocaleString();
-                } else {
-                    throw new Error('Invalid response');
-                }
-            } catch (error) {
-                console.error('Visitor counter error:', error);
-                // Fallback display
-                try {
-                    // Try to at least GET the current count without incrementing
-                    const getResponse = await fetch(`https://api.countapi.xyz/get/${namespace}/${key}`);
-                    const getData = await getResponse.json();
-                    if (getData && getData.value !== undefined) {
-                        el.textContent = getData.value.toLocaleString();
-                    } else {
-                        el.textContent = '---';
-                    }
-                } catch {
-                    el.textContent = '---';
-                }
-            }
-        }
-
-        // Initialize counter when config screen is visible
-        document.addEventListener('DOMContentLoaded', function() {
-            const configScreen = document.getElementById('config-screen');
-            if (configScreen && configScreen.classList.contains('active')) {
-                updateVisitorCounter();
-            }
-        });
-
-        // Also update when explicitly shown
-        const originalShowScreen = window.showScreen;
-        if (typeof originalShowScreen === 'function') {
-            window.showScreen = function(screenId) {
-                originalShowScreen(screenId);
-                if (screenId === 'config-screen') {
-                    setTimeout(updateVisitorCounter, 100);
-                }
-            };
-        }
-        </script>
 
     </div>
   </div>
@@ -1203,6 +1229,146 @@ function classifySection(subject) {
       });
       doc.save(`NRL_Mock_Test_Results_${new Date().toISOString().split('T')[0]}.pdf`);
     }
-  </script>
+  
+
+// === OPTIMIZED DRAGGABLE THEME BUTTON (No Lag) ===
+(function() {
+  const btn = document.querySelector('.theme-toggle-btn');
+  if (!btn) return;
+
+  let isDragging = false;
+  let currentX = 0, currentY = 0;
+
+  // Load saved position
+  const savedPos = localStorage.getItem('themeBtnPos');
+  if (savedPos) {
+    try {
+      const pos = JSON.parse(savedPos);
+      btn.style.left = pos.x + 'px';
+      btn.style.top = pos.y + 'px';
+      btn.style.right = 'auto';
+      currentX = pos.x;
+      currentY = pos.y;
+    } catch (e) {}
+  }
+
+  function startDrag(e) {
+    isDragging = true;
+    btn.classList.add('dragging');
+
+    const touch = e.type.includes('touch') ? e.touches[0] : e;
+    const rect = btn.getBoundingClientRect();
+
+    btn.offsetX = touch.clientX - rect.left;
+    btn.offsetY = touch.clientY - rect.top;
+  }
+
+  function doDrag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const touch = e.type.includes('touch') ? e.touches[0] : e;
+
+    currentX = touch.clientX - btn.offsetX;
+    currentY = touch.clientY - btn.offsetY;
+
+    // Boundary constraints
+    const maxX = window.innerWidth - btn.offsetWidth;
+    const maxY = window.innerHeight - btn.offsetHeight;
+    currentX = Math.max(0, Math.min(currentX, maxX));
+    currentY = Math.max(0, Math.min(currentY, maxY));
+
+    // Use transform for smoother performance
+    btn.style.transform = `translate(${currentX - (savedPos ? 0 : parseInt(btn.style.right || 20))}px, ${currentY - 20}px)`;
+  }
+
+  function endDrag(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    btn.classList.remove('dragging');
+
+    // Finalize position
+    btn.style.left = currentX + 'px';
+    btn.style.top = currentY + 'px';
+    btn.style.right = 'auto';
+    btn.style.transform = '';
+
+    // Save
+    localStorage.setItem('themeBtnPos', JSON.stringify({ x: currentX, y: currentY }));
+  }
+
+  btn.addEventListener('mousedown', startDrag);
+  btn.addEventListener('touchstart', startDrag, { passive: false });
+
+  document.addEventListener('mousemove', doDrag);
+  document.addEventListener('touchmove', doDrag, { passive: false });
+
+  document.addEventListener('mouseup', endDrag);
+  document.addEventListener('touchend', endDrag);
+})();
+
+// === WORKING VISITOR COUNTER ===
+(function() {
+  const el = document.getElementById('visitor-number');
+  if (!el) return;
+
+  const namespace = 'nrl-mock-platform';
+  const key = 'total-visitors-v3';
+
+  async function updateCounter() {
+    try {
+      const response = await fetch(`https://api.countapi.xyz/hit/${namespace}/${key}`);
+
+      if (!response.ok) throw new Error('API error');
+
+      const data = await response.json();
+
+      if (data && typeof data.value === 'number') {
+        animateCount(data.value);
+      } else {
+        throw new Error('Invalid data');
+      }
+    } catch (error) {
+      console.error('Visitor counter error:', error);
+      // Fallback
+      try {
+        const getResponse = await fetch(`https://api.countapi.xyz/get/${namespace}/${key}`);
+        const getData = await getResponse.json();
+        if (getData && typeof getData.value === 'number') {
+          el.textContent = getData.value.toLocaleString();
+        } else {
+          el.textContent = '---';
+        }
+      } catch {
+        el.textContent = '---';
+      }
+    }
+  }
+
+  function animateCount(target) {
+    const duration = 1500;
+    const startTime = performance.now();
+
+    function update(currentTime) {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const easeOut = 1 - Math.pow(1 - progress, 4);
+      const current = Math.floor(target * easeOut);
+
+      el.textContent = current.toLocaleString();
+
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      }
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  // Initialize
+  setTimeout(updateCounter, 500);
+})();
+
+</script>
 </body>
 </html>
