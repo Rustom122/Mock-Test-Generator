@@ -352,6 +352,145 @@
       </div>
 
       <button class="btn btn-full" onclick="startExam()">Start Exam</button>
+
+        <!-- Smart Footer -->
+        <footer class="smart-footer" id="smart-footer">
+            <div class="footer-flex">
+                <div class="visitor-counter">
+                    <span class="visitor-icon" aria-label="Visitor Count">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" fill="var(--color-surface)" stroke="var(--color-primary)" stroke-width="2"/>
+                            <path d="M15.5 12a3.5 3.5 0 11-7 0 3.5 3.5 0 017 0z" stroke="var(--color-primary)" stroke-width="2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span class="visitor-number" id="visitor-number" style="font-weight: 600;">...</span>
+                    <span class="visitor-label">total visitors</span>
+                </div>
+                <div class="footer-contact">
+                    <span class="contact-label">Any queries?</span>
+                    <a href="mailto:rustomphukan1@gmail.com" class="contact-email">rustomphukan1@gmail.com</a>
+                </div>
+            </div>
+        </footer>
+
+        <style>
+        .smart-footer {
+            margin-top: 40px;
+            padding: 28px 10px 22px 10px;
+            background: var(--color-surface);
+            border-top: 2px solid var(--color-border);
+            box-shadow: 0 -2px 16px rgba(33,128,141,0.07);
+            font-family: var(--font-family-base);
+        }
+        .footer-flex {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .visitor-counter {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            color: var(--color-primary);
+            background: var(--color-bg-3);
+            padding: 10px 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xs);
+            font-weight: 500;
+        }
+        .visitor-counter .visitor-number {
+            margin: 0 8px 0 2px;
+            font-size: 22px;
+            color: var(--color-text);
+            min-width: 30px;
+            display: inline-block;
+            letter-spacing: 1px;
+        }
+        .visitor-counter .visitor-label {
+            font-size: 15px;
+            color: var(--color-text-secondary);
+            font-weight: 400;
+        }
+        .visitor-counter .visitor-icon {
+            margin-right: 4px;
+            display: flex;
+            align-items: center;
+        }
+        .footer-contact {
+            display: flex;
+            align-items: center;
+            background: var(--color-bg-1);
+            padding: 10px 20px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xs);
+            font-size: 16px;
+        }
+        .footer-contact .contact-label {
+            font-weight: 500;
+            color: var(--color-primary);
+            margin-right: 8px;
+        }
+        .footer-contact .contact-email {
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .footer-contact .contact-email:hover {
+            color: var(--color-primary-hover);
+        }
+
+        @media (max-width: 700px) {
+            .footer-flex {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+            .visitor-counter, .footer-contact {
+                justify-content: center;
+                width: 100%;
+            }
+        }
+        </style>
+
+        <script>
+        // Smart Visitor Counter -- persistent and reasonably tamper-resistant using fetch to an external simple counter API
+        // THIS IS ONLY FOR DEMO/TEST; for production, connect to your own backend, or use vercel/other-free-counter (CORS-safe)
+        async function updateVisitorCounter() {
+            const el = document.getElementById('visitor-number');
+            // Demo public API (will usually work, low volume): https://api.countapi.xyz/
+            const key = "nrl-mock-exam-config-footer-v2";
+            try {
+                let result = await fetch(`https://api.countapi.xyz/hit/nrlplatform.xyz/${key}?amount=1`);
+                let data = await result.json();
+                if (data && data.value) {
+                    el.textContent = data.value.toLocaleString();
+                } else {
+                    throw new Error("No value");
+                }
+            } catch {
+                // Fallback: demo client-side counter
+                let fallback = parseInt(localStorage.getItem('footerVisitorFallback') || "1", 10);
+                el.textContent = fallback.toLocaleString() + "+";
+                localStorage.setItem('footerVisitorFallback', (fallback + 1).toString());
+            }
+        }
+        if (window.location.hash === '#config' || window.location.pathname.includes('config')) {
+            updateVisitorCounter();
+        }
+        // Also in other cases, show count on config screen mount
+        document.addEventListener('DOMContentLoaded', function () {
+            const screen = document.getElementById('config-screen');
+            if (screen && (screen.classList.contains('active') || window.location.hash === '#config')) {
+                updateVisitorCounter();
+            }
+        });
+        </script>
+
     </div>
   </div>
 
