@@ -114,8 +114,179 @@
     .screen { display: none; min-height: 100vh; padding: 20px; padding-top: 80px; }
     .screen.active { display: block; }
 
-    .config-container { max-width: 900px; margin: 0 auto; background: var(--color-surface); padding: 40px; border-radius: var(--radius-lg); box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .config-container h1 { text-align: center; margin-bottom: 30px; color: var(--color-primary); }
+    .config-container { 
+      max-width: 900px; 
+      margin: 0 auto; 
+      padding: 40px; 
+      border-radius: var(--radius-lg); 
+      border: 2px solid transparent;
+      background: linear-gradient(135deg, 
+        rgba(33, 128, 141, 0.15) 0%, 
+        rgba(123, 58, 237, 0.1) 25%, 
+        rgba(59, 130, 246, 0.08) 50%, 
+        rgba(236, 72, 153, 0.1) 75%, 
+        rgba(245, 158, 11, 0.08) 100%),
+        radial-gradient(circle at 20% 50%, rgba(33, 128, 141, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(123, 58, 237, 0.1) 0%, transparent 50%),
+        var(--color-surface);
+      background-attachment: fixed;
+      background-clip: padding-box;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 0 20px rgba(33, 128, 141, 0.4),
+        0 0 40px rgba(123, 58, 237, 0.2),
+        0 0 60px rgba(33, 128, 141, 0.15),
+        inset 0 0 20px rgba(33, 128, 141, 0.1);
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes glowPulse {
+      0%, 100% { 
+        box-shadow: 
+          0 0 20px rgba(33, 128, 141, 0.4),
+          0 0 40px rgba(123, 58, 237, 0.2),
+          0 0 60px rgba(33, 128, 141, 0.15),
+          inset 0 0 20px rgba(33, 128, 141, 0.1);
+      }
+      50% { 
+        box-shadow: 
+          0 0 30px rgba(33, 128, 141, 0.6),
+          0 0 60px rgba(123, 58, 237, 0.35),
+          0 0 80px rgba(33, 128, 141, 0.25),
+          inset 0 0 30px rgba(33, 128, 141, 0.15);
+      }
+    }
+    
+    .config-container::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(33, 128, 141, 0.1) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    
+    .config-container::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -5%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(123, 58, 237, 0.08) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .config-container h1 { 
+      text-align: center; 
+      margin-bottom: 30px; 
+      color: var(--color-primary);
+      position: relative;
+      z-index: 1;
+      font-size: 44px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #21808d, #7c3aed, #3b82f6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 2px 20px rgba(33, 128, 141, 0.3);
+      filter: drop-shadow(0 4px 15px rgba(33, 128, 141, 0.2));
+      transition: all 0.3s ease;
+      padding: 20px 0;
+      animation: slideInDown 0.8s ease-out;
+    }
+    
+    .config-container h1:hover {
+      filter: drop-shadow(0 8px 25px rgba(33, 128, 141, 0.4));
+      transform: scale(1.03);
+    }
+    
+    @keyframes slideInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Light theme gradient for container - Vibrant Rainbow */
+    [data-theme="light-purple"] .config-container {
+      background: linear-gradient(135deg, 
+        rgba(244, 63, 94, 0.12) 0%, 
+        rgba(251, 146, 60, 0.1) 20%,
+        rgba(250, 204, 21, 0.1) 40%, 
+        rgba(34, 197, 94, 0.1) 60%, 
+        rgba(59, 130, 246, 0.1) 80%,
+        rgba(139, 92, 246, 0.12) 100%),
+        radial-gradient(circle at 15% 30%, rgba(244, 63, 94, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 85% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 50% 100%, rgba(34, 197, 94, 0.08) 0%, transparent 40%),
+        var(--color-surface);
+      background-attachment: fixed;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 
+        0 0 20px rgba(139, 92, 246, 0.4),
+        0 0 40px rgba(244, 63, 94, 0.2),
+        0 0 60px rgba(139, 92, 246, 0.15),
+        inset 0 0 20px rgba(139, 92, 246, 0.1);
+      animation: glowPulseLightTheme 3s ease-in-out infinite;
+    }
+
+    @keyframes glowPulseLightTheme {
+      0%, 100% { 
+        box-shadow: 
+          0 0 20px rgba(139, 92, 246, 0.4),
+          0 0 40px rgba(244, 63, 94, 0.2),
+          0 0 60px rgba(139, 92, 246, 0.15),
+          inset 0 0 20px rgba(139, 92, 246, 0.1);
+      }
+      50% { 
+        box-shadow: 
+          0 0 30px rgba(139, 92, 246, 0.6),
+          0 0 60px rgba(244, 63, 94, 0.35),
+          0 0 80px rgba(139, 92, 246, 0.25),
+          inset 0 0 30px rgba(139, 92, 246, 0.15);
+      }
+    }
+    
+    [data-theme="light-purple"] .config-container::before {
+      background: radial-gradient(circle, rgba(251, 146, 60, 0.1) 0%, transparent 70%);
+      top: -40%;
+      right: -5%;
+      width: 550px;
+      height: 550px;
+    }
+    
+    [data-theme="light-purple"] .config-container::after {
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+      bottom: -20%;
+      left: -10%;
+      width: 450px;
+      height: 450px;
+    }
+    
+    /* Light theme gradient for heading - Rose to Purple */
+    [data-theme="light-purple"] .config-container h1 {
+      background: linear-gradient(135deg, #ef4444, #f97316, #eab308, #22c55e, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+      filter: drop-shadow(0 4px 12px rgba(244, 63, 94, 0.25));
+    }
+    
+    [data-theme="light-purple"] .config-container h1:hover {
+      filter: drop-shadow(0 8px 24px rgba(244, 63, 94, 0.35));
+    }
 
     .mode-toggle-container { display: flex; justify-content: center; align-items: center; margin-bottom: 30px; gap: 20px; }
     .mode-toggle { position: relative; width: 280px; height: 50px; background: var(--color-secondary); border-radius: var(--radius-full); padding: 4px; display: flex; cursor: pointer; }
@@ -123,6 +294,20 @@
     .mode-toggle-slider { position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px); background: var(--color-primary); border-radius: var(--radius-full); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; }
     .mode-toggle[data-mode="subject"] .mode-toggle-slider { transform: translateX(calc(100% + 4px)); }
     .mode-option.active { color: #fff; }
+
+    .form-section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--color-border); }
+    .form-section:last-child { border-bottom: none; margin-bottom: 20px; }
+    .form-section-title { 
+      font-size: 16px; 
+      font-weight: 600; 
+      color: var(--color-primary); 
+      margin-bottom: 20px; 
+      display: flex; 
+      align-items: center; 
+      gap: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
     .form-group { margin-bottom: 24px; }
     .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--color-text-secondary); }
@@ -150,11 +335,87 @@
     .btn-secondary { background: var(--color-secondary); color: var(--color-text); }
     .btn-secondary:hover { background: var(--color-secondary-hover); }
 
-    .exam-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
-    .exam-title { font-size: 20px; font-weight: 600; }
-    .timer { font-size: 24px; font-weight: 700; color: var(--color-primary); }
-    .exam-container { display: flex; margin-top: 80px; height: calc(100vh - 80px); overflow: hidden; }
-    .question-area { flex: 1; padding: 30px; overflow-y: auto; }
+    .exam-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 16px 30px; 
+      background: linear-gradient(135deg, var(--color-surface) 0%, rgba(33, 128, 141, 0.05) 100%);
+      border-bottom: 2px solid var(--color-border);
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .exam-title { 
+      font-size: 22px; 
+      font-weight: 700; 
+      background: linear-gradient(135deg, var(--color-primary), #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .timer { 
+      font-size: 32px; 
+      font-weight: 800; 
+      color: var(--color-primary);
+      font-family: 'Courier New', monospace;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      background: rgba(33, 128, 141, 0.1);
+      border: 2px solid var(--color-primary);
+      border-radius: 12px;
+      animation: timerPulse 1s ease-in-out infinite;
+      min-width: 160px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(33, 128, 141, 0.2);
+    }
+
+    .timer.warning {
+      color: var(--color-warning);
+      border-color: var(--color-warning);
+      background: rgba(230, 129, 97, 0.1);
+      animation: timerWarning 0.5s ease-in-out infinite;
+      box-shadow: 0 0 15px rgba(230, 129, 97, 0.4);
+    }
+
+    .timer.danger {
+      color: var(--color-error);
+      border-color: var(--color-error);
+      background: rgba(255, 84, 89, 0.1);
+      animation: timerDanger 0.3s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(255, 84, 89, 0.5);
+    }
+
+    @keyframes timerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes timerWarning {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 15px rgba(230, 129, 97, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 0 25px rgba(230, 129, 97, 0.7); }
+    }
+
+    @keyframes timerDanger {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 84, 89, 0.5); }
+      50% { transform: scale(1.08); box-shadow: 0 0 30px rgba(255, 84, 89, 0.8); }
+    }
+    .exam-container { 
+      display: flex; 
+      margin-top: 80px; 
+      height: calc(100vh - 80px); 
+      overflow: hidden;
+      gap: 0;
+    }
+    .question-area { 
+      flex: 1; 
+      padding: 30px; 
+      overflow-y: auto;
+      background: linear-gradient(135deg, var(--color-background) 0%, rgba(33, 128, 141, 0.03) 100%);
+    }
     .question-header { margin-bottom: 20px; }
     .question-number { font-size: 18px; font-weight: 600; color: var(--color-text-secondary); }
     .section-badge { display: inline-block; padding: 4px 12px; background: var(--color-primary); color: #fff; border-radius: var(--radius-full); font-size: 14px; margin-left: 10px; }
@@ -165,17 +426,80 @@
     .mcq-option label { font-size: 16px; line-height: 1.6; cursor: pointer; display: flex; align-items: baseline; flex: 1; }
     .mcq-option label strong { margin-right: 8px; color: var(--color-text-secondary); min-width: 20px; }
     .nav-buttons { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
-    .palette-container { width: 300px; background: var(--color-surface); border-left: 1px solid var(--color-border); padding: 20px; overflow-y: auto; }
-    .palette-header { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
-    .palette-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-    .palette-btn { width: 100%; aspect-ratio: 1; border: 1px solid var(--color-border); background: #6e7070; color: #fff; border-radius: 4px; font-size: 14px; cursor: pointer; transition: transform 0.1s; }
-    .palette-btn:hover { transform: scale(1.05); }
-    .palette-btn.answered { background: #4ade80; }
-    .palette-btn.not-answered { background: #f87171; }
-    .palette-btn.marked { background: #a78bfa; }
-    .palette-legend { margin-top: 20px; font-size: 12px; }
-    .legend-item { display: flex; align-items: center; margin-bottom: 8px; }
-    .legend-color { width: 20px; height: 20px; border-radius: 4px; margin-right: 8px; }
+    .palette-container { 
+      width: 280px; 
+      background: linear-gradient(180deg, var(--color-surface) 0%, rgba(33, 128, 141, 0.05) 100%);
+      border-left: 3px solid var(--color-primary);
+      padding: 24px 16px; 
+      overflow-y: auto;
+      box-shadow: -4px 0 12px rgba(0,0,0,0.15);
+    }
+    .palette-header { 
+      font-size: 16px; 
+      font-weight: 700; 
+      margin-bottom: 20px;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .palette-grid { 
+      display: grid; 
+      grid-template-columns: repeat(5, 1fr); 
+      gap: 8px; 
+      margin-bottom: 20px; 
+    }
+    .palette-btn { 
+      width: 100%; 
+      aspect-ratio: 1; 
+      border: 2px solid var(--color-border); 
+      background: #6e7070; 
+      color: #fff; 
+      border-radius: 8px; 
+      font-size: 12px; 
+      font-weight: 600;
+      cursor: pointer; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .palette-btn:hover { 
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(33, 128, 141, 0.3);
+    }
+    .palette-btn.answered { 
+      background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+      border-color: #22c55e;
+    }
+    .palette-btn.not-answered { 
+      background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
+      border-color: #dc2626;
+    }
+    .palette-btn.marked { 
+      background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+      border-color: #7c3aed;
+    }
+    .palette-btn.current {
+      box-shadow: 0 0 12px rgba(33, 128, 141, 0.6), inset 0 0 12px rgba(255,255,255,0.1);
+      transform: scale(1.15);
+    }
+    .palette-legend { 
+      margin-top: 24px; 
+      padding-top: 20px;
+      border-top: 1px solid var(--color-border);
+      font-size: 12px; 
+    }
+    .legend-item { 
+      display: flex; 
+      align-items: center; 
+      margin-bottom: 10px;
+      color: var(--color-text-secondary);
+    }
+    .legend-color { 
+      width: 16px; 
+      height: 16px; 
+      border-radius: 4px; 
+      margin-right: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
 
     .results-container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
     .results-header { text-align: center; margin-bottom: 40px; }
@@ -235,11 +559,57 @@
     .collapsible-content { max-height: 2000px; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin-top 0.3s ease; margin-top: 12px; opacity: 1; }
     .collapsible-section.collapsed .collapsible-content { max-height: 0; opacity: 0; margin-top: 0; }
 
+    /* Professional subtitle styling */
+    .config-subtitle {
+      text-align: center;
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 1;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      background: linear-gradient(90deg, var(--color-text-secondary), var(--color-text), var(--color-text-secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: fadeInUp 0.9s ease-out 0.3s forwards;
+      opacity: 0;
+      text-transform: uppercase;
+      tracking: 0.5px;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Light theme subtitle */
+    [data-theme="light-purple"] .config-subtitle {
+      background: linear-gradient(90deg, #6b5b95, #2d1b69, #6b5b95);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
     @media (max-width: 768px) {
       .exam-container { flex-direction: column; }
-      .palette-container { width: 100%; border-left: none; border-top: 1px solid var(--color-border); max-height: 300px; }
+      .palette-container { 
+        width: 100%; 
+        border-left: none; 
+        border-top: 3px solid var(--color-primary);
+        max-height: 250px;
+        padding: 16px;
+      }
       .stats-grid { grid-template-columns: 1fr; }
       .checkbox-grid { grid-template-columns: 1fr; }
+      .timer { font-size: 24px; min-width: 120px; }
+      .exam-header { padding: 12px 16px; }
     }
   </style>
 </head>
@@ -266,7 +636,7 @@
   <div id="config-screen" class="screen active">
     <div class="config-container">
       <h1>TCS ION Mock Test</h1>
-      <p style="text-align: center; color: var(--color-text-secondary); margin-bottom: 30px;">Configure your exam settings</p>
+      <p class="config-subtitle">Configure your exam settings</p>
 
       <div class="mode-toggle-container">
         <div class="mode-toggle" id="mode-toggle" data-mode="full" onclick="toggleExamMode()">
@@ -277,126 +647,141 @@
       </div>
 
       <div id="full-test-mode">
-        <div class="form-group">
-          <label>Exam Name</label>
-          <input type="text" id="exam-name" value="NRL Mock Test">
+        <div class="form-section">
+          <h3 class="form-section-title">📋 Basic Settings</h3>
+          <div class="form-group">
+            <label>Exam Name</label>
+            <input type="text" id="exam-name" value="NRL Mock Test">
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Number of Technical Questions</label>
-          <input type="number" id="tech-questions-full" value="45" min="0">
-          <small style="color: var(--color-text-secondary); font-size: 12px;">Topics: DC Machines, Transformers, Power Systems, etc.</small>
-        </div>
+        <div class="form-section">
+          <h3 class="form-section-title">❓ Question Configuration</h3>
+          <div class="form-group">
+            <label>Number of Technical Questions</label>
+            <input type="number" id="tech-questions-full" value="45" min="0">
+            <small style="color: var(--color-text-secondary); font-size: 12px;">Topics: DC Machines, Transformers, Power Systems, etc.</small>
+          </div>
 
-        <div class="form-group">
-          <label>Number of Non-Technical Questions</label>
-          <input type="number" id="nontech-questions-full" value="15" min="0">
-          <small style="color: var(--color-text-secondary); font-size: 12px;">Topics: Aptitude, Reasoning, General Knowledge, etc.</small>
-        </div>
+          <div class="form-group">
+            <label>Number of Non-Technical Questions</label>
+            <input type="number" id="nontech-questions-full" value="15" min="0">
+            <small style="color: var(--color-text-secondary); font-size: 12px;">Topics: Aptitude, Reasoning, General Knowledge, etc.</small>
+          </div>
 
-        <div class="form-group">
-          <label>Question Types (Select at least one)</label>
-          <div class="checkbox-grid" id="question-type-checkboxes">
-            <div class="checkbox-item">
-              <input type="checkbox" id="type-numerical" value="Numerical" checked>
-              <label for="type-numerical">Numerical</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="type-theoretical" value="Theoretical" checked>
-              <label for="type-theoretical">Theoretical</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="type-conceptual" value="Conceptual" checked>
-              <label for="type-conceptual">Conceptual</label>
+          <div class="form-group">
+            <label>Question Types (Select at least one)</label>
+            <div class="checkbox-grid" id="question-type-checkboxes">
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-numerical" value="Numerical" checked>
+                <label for="type-numerical">Numerical</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-theoretical" value="Theoretical" checked>
+                <label for="type-theoretical">Theoretical</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="type-conceptual" value="Conceptual" checked>
+                <label for="type-conceptual">Conceptual</label>
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Difficulty Levels (Select at least one)</label>
-          <div class="checkbox-grid" id="difficulty-checkboxes">
-            <div class="checkbox-item">
-              <input type="checkbox" id="diff-easy" value="Easy" checked>
-              <label for="diff-easy">Easy</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="diff-medium" value="Medium" checked>
-              <label for="diff-medium">Medium</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="diff-hard" value="Hard" checked>
-              <label for="diff-hard">Hard</label>
+        <div class="form-section">
+          <h3 class="form-section-title">⚙️ Exam Parameters</h3>
+          <div class="form-group">
+            <label>Difficulty Levels (Select at least one)</label>
+            <div class="checkbox-grid" id="difficulty-checkboxes">
+              <div class="checkbox-item">
+                <input type="checkbox" id="diff-easy" value="Easy" checked>
+                <label for="diff-easy">Easy</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="diff-medium" value="Medium" checked>
+                <label for="diff-medium">Medium</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="diff-hard" value="Hard" checked>
+                <label for="diff-hard">Hard</label>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="form-group">
-          <label>Exam Duration (minutes)</label>
-          <input type="number" id="duration" value="90" min="15" max="180">
+          <div class="form-group">
+            <label>Exam Duration (minutes)</label>
+            <input type="number" id="duration" value="90" min="15" max="180">
+          </div>
         </div>
       </div>
 
       <div id="subject-wise-mode" style="display: none;">
-        <div id="subject-selection" class="selection-panel">
-          <div class="selection-header">
-            <h3>Select Subjects</h3>
-            <button class="select-all-btn" onclick="toggleSelectAll('subjects')">Select All</button>
+        <div class="form-section">
+          <h3 class="form-section-title">📚 Subject & Topics</h3>
+          <div id="subject-selection" class="selection-panel">
+            <div class="selection-header">
+              <h3>Select Subjects</h3>
+              <button class="select-all-btn" onclick="toggleSelectAll('subjects')">Select All</button>
+            </div>
+            <div class="checkbox-grid" id="subject-checkboxes"></div>
           </div>
-          <div class="checkbox-grid" id="subject-checkboxes"></div>
-        </div>
 
-        <div id="chapter-selection" class="collapsible-section" style="display: none;">
-          <div class="collapsible-header" >
-            <h3>Select Chapters</h3>
-            <div class="collapsible-toggle">
-              <button class="select-all-btn" onclick="event.stopPropagation(); toggleSelectAll('chapters')">Select All</button>
-              <span class="collapsible-icon">▼</span>
+          <div id="chapter-selection" class="collapsible-section" style="display: none;">
+            <div class="collapsible-header" >
+              <h3>Select Chapters</h3>
+              <div class="collapsible-toggle">
+                <button class="select-all-btn" onclick="event.stopPropagation(); toggleSelectAll('chapters')">Select All</button>
+                <span class="collapsible-icon">▼</span>
+              </div>
+            </div>
+            <div class="collapsible-content">
+              <div class="checkbox-grid" id="chapter-checkboxes" style="padding: 0 20px;"></div>
             </div>
           </div>
-          <div class="collapsible-content">
-            <div class="checkbox-grid" id="chapter-checkboxes" style="padding: 0 20px;"></div>
-          </div>
-        </div>
 
-        <div id="topic-selection" class="collapsible-section" style="display: none;">
-          <div class="collapsible-header" >
-            <h3>Select Topics (Optional)</h3>
-            <div class="collapsible-toggle">
-              <button class="select-all-btn" onclick="event.stopPropagation(); toggleSelectAll('topics')">Select All</button>
-              <span class="collapsible-icon">▼</span>
+          <div id="topic-selection" class="collapsible-section" style="display: none;">
+            <div class="collapsible-header" >
+              <h3>Select Topics (Optional)</h3>
+              <div class="collapsible-toggle">
+                <button class="select-all-btn" onclick="event.stopPropagation(); toggleSelectAll('topics')">Select All</button>
+                <span class="collapsible-icon">▼</span>
+              </div>
             </div>
-          </div>
-          <div class="collapsible-content">
-            <div class="checkbox-grid" id="topic-checkboxes" style="padding: 0 20px;"></div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Question Types (Select at least one)</label>
-          <div class="checkbox-grid" id="subject-question-type-checkboxes">
-            <div class="checkbox-item">
-              <input type="checkbox" id="subj-type-numerical" value="Numerical" checked>
-              <label for="subj-type-numerical">Numerical</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="subj-type-theoretical" value="Theoretical" checked>
-              <label for="subj-type-theoretical">Theoretical</label>
-            </div>
-            <div class="checkbox-item">
-              <input type="checkbox" id="subj-type-conceptual" value="Conceptual" checked>
-              <label for="subj-type-conceptual">Conceptual</label>
+            <div class="collapsible-content">
+              <div class="checkbox-grid" id="topic-checkboxes" style="padding: 0 20px;"></div>
             </div>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Number of Questions</label>
-          <input type="number" id="subject-questions" value="60" min="1">
-        </div>
+        <div class="form-section">
+          <h3 class="form-section-title">❓ Question & Test Settings</h3>
+          <div class="form-group">
+            <label>Question Types (Select at least one)</label>
+            <div class="checkbox-grid" id="subject-question-type-checkboxes">
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-type-numerical" value="Numerical" checked>
+                <label for="subj-type-numerical">Numerical</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-type-theoretical" value="Theoretical" checked>
+                <label for="subj-type-theoretical">Theoretical</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-type-conceptual" value="Conceptual" checked>
+                <label for="subj-type-conceptual">Conceptual</label>
+              </div>
+            </div>
+          </div>
 
-        <div class="form-group">
-          <label>Exam Duration (minutes)</label>
-          <input type="number" id="subject-duration" value="90" min="15" max="180">
+          <div class="form-group">
+            <label>Number of Questions</label>
+            <input type="number" id="subject-questions" value="60" min="1">
+          </div>
+
+          <div class="form-group">
+            <label>Exam Duration (minutes)</label>
+            <input type="number" id="subject-duration" value="90" min="15" max="180">
+          </div>
         </div>
       </div>
 
@@ -641,7 +1026,8 @@
       examMode: 'full',
       selectedSubjects: [],
       selectedChapters: [],
-      selectedTopics: []
+      selectedTopics: [],
+      isAutoSubmit: false
     };
 
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjJ_eWAoVK2SXvTMvN0BM4SHo60i-0WE6UKmu4rTao2sLynOMvoQ427mHd2u9YWGeNjOYncb2S3YAf/pub?output=csv';
@@ -1073,7 +1459,13 @@ function classifySection(subject) {
       appState.userAnswers.forEach((ans, i) => {
         const btn = document.getElementById(`palette-${i}`);
         if (!btn) return;
-        btn.classList.remove('answered', 'not-answered', 'marked');
+        btn.classList.remove('answered', 'not-answered', 'marked', 'current');
+        
+        // Highlight current question
+        if (i === appState.currentQuestionIndex) {
+          btn.classList.add('current');
+        }
+        
         if (!ans.visited) { }
         else if (ans.markedForReview) btn.classList.add('marked');
         else if (ans.selectedOption !== null) btn.classList.add('answered');
@@ -1106,9 +1498,20 @@ function classifySection(subject) {
         seconds--;
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
-        document.getElementById('timer').textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        const timerEl = document.getElementById('timer');
+        timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        
+        // Smart timer warning system
+        timerEl.classList.remove('warning', 'danger');
+        if (seconds <= 60 && seconds > 30) {
+          timerEl.classList.add('warning');
+        } else if (seconds <= 30) {
+          timerEl.classList.add('danger');
+        }
+        
         if (seconds <= 0) { 
           clearInterval(appState.timerInterval); 
+          appState.isAutoSubmit = true;
           showModal('Time Up!', 
             'Your exam time has ended. Your test will be submitted automatically.', 
             [{ text: 'OK', primary: true, action: () => { hideModal(); submitTest(); } }]);
@@ -1145,17 +1548,23 @@ function classifySection(subject) {
         ${unanswered > 0 ? '<p style="color: var(--color-warning); font-weight: 500;">⚠️ You have unanswered questions. Are you sure you want to submit?</p>' : '<p style="color: var(--color-success);">✓ All questions answered. Ready to submit!</p>'}
       `;
       
-      showModal('Submit Test', summaryHTML, [
-        { text: 'Cancel', primary: false, action: hideModal },
-        { text: 'Submit Test', primary: true, action: () => {
-          hideModal();
-          clearInterval(appState.timerInterval);
-          calculateResults();
-          switchScreen('results');
-          renderResults();
-          setTimeout(() => { if (window.MathJax) MathJax.typesetPromise([document.getElementById('results-screen')]).catch(err => console.error('MathJax:', err)); }, 100);
-        }}
-      ]);
+      const buttons = [];
+      
+      // Only show Cancel button if this is NOT an automatic submission (time didn't run out)
+      if (!appState.isAutoSubmit) {
+        buttons.push({ text: 'Cancel', primary: false, action: hideModal });
+      }
+      
+      buttons.push({ text: appState.isAutoSubmit ? 'OK' : 'Submit Test', primary: true, action: () => {
+        hideModal();
+        clearInterval(appState.timerInterval);
+        calculateResults();
+        switchScreen('results');
+        renderResults();
+        setTimeout(() => { if (window.MathJax) MathJax.typesetPromise([document.getElementById('results-screen')]).catch(err => console.error('MathJax:', err)); }, 100);
+      }});
+      
+      showModal('Submit Test', summaryHTML, buttons);
     }
 
     function calculateResults() {
@@ -1205,6 +1614,7 @@ function classifySection(subject) {
     function retakeTest() {
       appState.currentQuestionIndex = 0;
       appState.userAnswers = [];
+      appState.isAutoSubmit = false;
       const filtered = appState.examMode === 'full' 
         ? filterQuestionsFullTest(appState.allQuestions, appState.config.techCount || 45, appState.config.nonTechCount || 15, ['Easy', 'Medium', 'Hard'], ['Numerical', 'Theoretical', 'Conceptual'])
         : filterQuestionsSubjectWise(appState.allQuestions, appState.selectedSubjects, appState.selectedChapters, appState.selectedTopics, appState.examQuestions.length, ['Numerical', 'Theoretical', 'Conceptual']);
@@ -1221,6 +1631,7 @@ function classifySection(subject) {
       appState.userAnswers = [];
       appState.examQuestions = [];
       appState.config = {};
+      appState.isAutoSubmit = false;
       switchScreen('config');
     }
 
