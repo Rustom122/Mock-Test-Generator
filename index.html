@@ -45,16 +45,16 @@
   <style>
     /* CSS Design System */
     :root {
-      --color-background: #0d0d0d;
-      --color-surface: #121212;
+      --color-background: #000000;
+      --color-surface: #000000;
       --color-text: #f5f5f5;
       --color-text-secondary: #a8a8a8;
-      --color-primary: #d946a6;
-      --color-primary-hover: #c71585;
-      --color-primary-active: #b01478;
-      --color-secondary: rgba(217, 70, 166, 0.08);
-      --color-secondary-hover: rgba(217, 70, 166, 0.15);
-      --color-border: rgba(217, 70, 166, 0.15);
+      --color-primary: #b91c1c;
+      --color-primary-hover: #dc2626;
+      --color-primary-active: #991b1b;
+      --color-secondary: rgba(185, 28, 28, 0.08);
+      --color-secondary-hover: rgba(185, 28, 28, 0.15);
+      --color-border: rgba(185, 28, 28, 0.20);
       --color-success: #06d6a0;
       --color-error: #ff5459;
       --color-warning: #f4a261;
@@ -122,7 +122,7 @@
     }
 
     .theme-toggle-btn:hover:not(.dragging) {
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(33, 128, 141, 0.2);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25), 0 0 0 4px rgba(185, 28, 28, 0.2);
       border-color: var(--color-primary);
     }
 
@@ -142,27 +142,15 @@
       margin: 0 auto;
       padding: 60px 50px;
       border-radius: 20px;
-      border: 2px solid transparent;
-      background: linear-gradient(135deg,
-          rgba(217, 70, 166, 0.08) 0%,
-          rgba(160, 30, 120, 0.05) 25%,
-          rgba(100, 20, 80, 0.04) 50%,
-          rgba(140, 50, 110, 0.05) 75%,
-          rgba(217, 70, 166, 0.06) 100%),
-        radial-gradient(circle at 20% 50%, rgba(217, 70, 166, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(160, 30, 120, 0.05) 0%, transparent 50%),
-        var(--color-surface);
-      background-attachment: fixed;
-      background-clip: padding-box;
+      background: #000000;
       position: relative;
       overflow: hidden;
       box-shadow:
-        0 0 20px rgba(217, 70, 166, 0.25),
-        0 0 40px rgba(160, 30, 120, 0.12),
-        0 0 60px rgba(217, 70, 166, 0.08),
-        inset 0 0 20px rgba(217, 70, 166, 0.06);
+        0 0 25px rgba(185, 28, 28, 0.4),
+        0 0 50px rgba(185, 28, 28, 0.2),
+        0 0 75px rgba(185, 28, 28, 0.1);
       animation: glowPulse 3s ease-in-out infinite;
-      border: 1px solid rgba(217, 70, 166, 0.12);
+      border: 1px solid rgba(185, 28, 28, 0.25);
     }
 
     @keyframes glowPulse {
@@ -170,63 +158,118 @@
       0%,
       100% {
         box-shadow:
-          0 0 20px rgba(217, 70, 166, 0.25),
-          0 0 40px rgba(160, 30, 120, 0.12),
-          0 0 60px rgba(217, 70, 166, 0.08),
-          inset 0 0 20px rgba(217, 70, 166, 0.06);
+          0 0 25px rgba(185, 28, 28, 0.4),
+          0 0 50px rgba(185, 28, 28, 0.2),
+          0 0 75px rgba(185, 28, 28, 0.1);
       }
 
       50% {
         box-shadow:
-          0 0 30px rgba(217, 70, 166, 0.35),
-          0 0 60px rgba(160, 30, 120, 0.18),
-          0 0 90px rgba(217, 70, 166, 0.12),
-          inset 0 0 30px rgba(217, 70, 166, 0.08);
+          0 0 35px rgba(185, 28, 28, 0.55),
+          0 0 70px rgba(185, 28, 28, 0.3),
+          0 0 100px rgba(185, 28, 28, 0.15);
       }
     }
 
     .config-container::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      right: -10%;
-      width: 500px;
-      height: 500px;
-      background: radial-gradient(circle, rgba(217, 70, 166, 0.06) 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
+      display: none;
     }
 
     .config-container::after {
-      content: '';
-      position: absolute;
-      bottom: -30%;
-      left: -5%;
-      width: 400px;
-      height: 400px;
-      background: radial-gradient(circle, rgba(160, 30, 120, 0.04) 0%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
+      display: none;
+    }
+
+    /* Gamusa Logo Styles */
+    .gamusa-logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: -5px;
+      animation: logoFloat 4s ease-in-out infinite, fadeInLogo 1s ease-out;
+    }
+
+    .gamusa-logo {
+      width: 180px;
+      height: 90px;
+      filter: drop-shadow(0 0 12px rgba(196, 30, 58, 0.7))
+              drop-shadow(0 0 25px rgba(196, 30, 58, 0.4))
+              drop-shadow(0 0 40px rgba(196, 30, 58, 0.2));
+      animation: logoGlow 3s ease-in-out infinite;
+      transition: all 0.4s ease;
+    }
+
+    .gamusa-logo:hover {
+      transform: scale(1.08);
+      filter: drop-shadow(0 0 18px rgba(196, 30, 58, 0.9))
+              drop-shadow(0 0 35px rgba(196, 30, 58, 0.6))
+              drop-shadow(0 0 55px rgba(196, 30, 58, 0.35));
+    }
+
+    @keyframes logoGlow {
+      0%, 100% {
+        filter: drop-shadow(0 0 12px rgba(196, 30, 58, 0.7))
+                drop-shadow(0 0 25px rgba(196, 30, 58, 0.4))
+                drop-shadow(0 0 40px rgba(196, 30, 58, 0.2));
+      }
+      50% {
+        filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.9))
+                drop-shadow(0 0 40px rgba(196, 30, 58, 0.5))
+                drop-shadow(0 0 60px rgba(196, 30, 58, 0.3));
+      }
+    }
+
+    @keyframes logoFloat {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes fadeInLogo {
+      from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Light theme logo adjustments */
+    [data-theme="light-purple"] .gamusa-logo {
+      filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.5))
+              drop-shadow(0 0 25px rgba(124, 58, 237, 0.3))
+              drop-shadow(0 0 40px rgba(124, 58, 237, 0.15));
+    }
+
+    [data-theme="light-purple"] .gamusa-logo:hover {
+      filter: drop-shadow(0 0 18px rgba(124, 58, 237, 0.7))
+              drop-shadow(0 0 35px rgba(124, 58, 237, 0.4))
+              drop-shadow(0 0 55px rgba(124, 58, 237, 0.25));
     }
 
     .config-container h1 {
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 5px;
+      margin-top: 0;
       color: var(--color-primary);
       position: relative;
       z-index: 1;
-      font-size: 72px;
+      font-size: 68px;
       font-weight: 900;
       letter-spacing: -1.5px;
-      background: linear-gradient(135deg, #d946a6 0%, #e74c8c 25%, #f069a0 50%, #e74c8c 75%, #d946a6 100%);
+      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 25%, #ef4444 50%, #dc2626 75%, #b91c1c 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       background-size: 200% 200%;
-      text-shadow: 0 4px 20px rgba(217, 70, 166, 0.3);
-      filter: drop-shadow(0 8px 15px rgba(217, 70, 166, 0.2));
+      text-shadow: 0 4px 20px rgba(185, 28, 28, 0.3);
+      filter: drop-shadow(0 8px 15px rgba(185, 28, 28, 0.2));
       transition: all 0.4s ease;
-      padding: 30px 0;
+      padding: 10px 0;
       animation: slideInDown 0.8s ease-out, gradientShift 8s ease infinite;
       font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
     }
@@ -237,7 +280,7 @@
     }
 
     .config-container h1:hover {
-      filter: drop-shadow(0 12px 25px rgba(217, 70, 166, 0.4));
+      filter: drop-shadow(0 12px 25px rgba(185, 28, 28, 0.4));
       transform: scale(1.05);
       animation: slideInDown 0.8s ease-out, gradientShift 3s ease infinite;
     }
@@ -364,12 +407,12 @@
 
     /* Subheader Styling - Dark Theme */
     .subheader-tagline {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 700;
-      margin-bottom: 40px;
-      margin-top: 6px;
+      margin-bottom: 30px;
+      margin-top: 0;
       text-align: center;
-      background: linear-gradient(90deg, #d946a6, #e74c8c, #d946a6);
+      background: linear-gradient(90deg, #b91c1c, #dc2626, #b91c1c);
       background-size: 200% 200%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -412,15 +455,15 @@
 
     /* Accent line under heading */
     .heading-accent {
-      height: 4px;
-      width: 100px;
-      background: linear-gradient(90deg, #00d4ff, #0099ff, #6b5bff, #ff006e);
+      height: 3px;
+      width: 80px;
+      background: linear-gradient(90deg, #b91c1c, #dc2626, #ef4444, #dc2626, #b91c1c);
       background-size: 200% 200%;
-      margin: 20px auto 0;
+      margin: 5px auto 8px;
       border-radius: 3px;
       animation: expandWidth 0.8s ease-out 0.3s forwards, accentGlow 6s ease infinite;
       opacity: 0;
-      box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+      box-shadow: 0 0 15px rgba(185, 28, 28, 0.6);
     }
 
     @keyframes expandWidth {
@@ -429,8 +472,8 @@
     }
 
     @keyframes accentGlow {
-      0%, 100% { background-position: 0% 50%; box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); }
-      50% { background-position: 100% 50%; box-shadow: 0 0 30px rgba(107, 91, 255, 0.6); }
+      0%, 100% { background-position: 0% 50%; box-shadow: 0 0 15px rgba(185, 28, 28, 0.6); }
+      50% { background-position: 100% 50%; box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); }
     }
 
     [data-theme="light-purple"] .heading-accent {
@@ -443,7 +486,7 @@
       top: 20px;
       left: 20px;
       z-index: 9999;
-      background: linear-gradient(135deg, #d946a6 0%, #c71585 100%);
+      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
       border: none;
       border-radius: 12px;
       width: 56px;
@@ -455,7 +498,7 @@
       cursor: pointer;
       gap: 6px;
       transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, visibility 0.3s ease;
-      box-shadow: 0 8px 24px rgba(217, 70, 166, 0.4), 0 0 12px rgba(217, 70, 166, 0.3);
+      box-shadow: 0 8px 24px rgba(185, 28, 28, 0.4), 0 0 12px rgba(185, 28, 28, 0.3);
       opacity: 1;
       visibility: visible;
       animation: twinkleGlow 4s ease-in-out infinite;
@@ -463,10 +506,10 @@
 
     @keyframes twinkleGlow {
       0%, 100% {
-        box-shadow: 0 8px 24px rgba(217, 70, 166, 0.25), 0 0 12px rgba(217, 70, 166, 0.15);
+        box-shadow: 0 8px 24px rgba(185, 28, 28, 0.25), 0 0 12px rgba(185, 28, 28, 0.15);
       }
       50% {
-        box-shadow: 0 8px 32px rgba(217, 70, 166, 0.5), 0 0 20px rgba(217, 70, 166, 0.35);
+        box-shadow: 0 8px 32px rgba(185, 28, 28, 0.5), 0 0 20px rgba(185, 28, 28, 0.35);
       }
     }
 
@@ -480,9 +523,9 @@
     }
 
     .burger-menu-btn:hover {
-      box-shadow: 0 12px 32px rgba(217, 70, 166, 0.6), 0 0 24px rgba(217, 70, 166, 0.4);
+      box-shadow: 0 12px 32px rgba(185, 28, 28, 0.6), 0 0 24px rgba(185, 28, 28, 0.4);
       transform: translateY(-2px);
-      background: linear-gradient(135deg, #e74c8c 0%, #d946a6 100%);
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     }
 
     .burger-menu-btn span {
@@ -960,7 +1003,7 @@
       justify-content: space-between;
       align-items: center;
       padding: 16px 30px;
-      background: linear-gradient(135deg, var(--color-surface) 0%, rgba(33, 128, 141, 0.05) 100%);
+      background: linear-gradient(135deg, var(--color-surface) 0%, rgba(185, 28, 28, 0.05) 100%);
       border-bottom: 2px solid var(--color-border);
       position: fixed;
       top: 0;
@@ -986,13 +1029,13 @@
       font-family: 'Courier New', monospace;
       letter-spacing: 2px;
       padding: 12px 24px;
-      background: rgba(33, 128, 141, 0.1);
+      background: rgba(185, 28, 28, 0.1);
       border: 2px solid var(--color-primary);
       border-radius: 12px;
       animation: timerPulse 1s ease-in-out infinite;
       min-width: 160px;
       text-align: center;
-      box-shadow: 0 0 10px rgba(33, 128, 141, 0.2);
+      box-shadow: 0 0 10px rgba(185, 28, 28, 0.2);
     }
 
     .timer.warning {
@@ -1063,7 +1106,7 @@
       flex: 1;
       padding: 30px;
       overflow-y: auto;
-      background: linear-gradient(135deg, var(--color-background) 0%, rgba(33, 128, 141, 0.03) 100%);
+      background: linear-gradient(135deg, var(--color-background) 0%, rgba(185, 28, 28, 0.03) 100%);
     }
 
     .question-header {
@@ -1135,7 +1178,7 @@
 
     .palette-container {
       width: 280px;
-      background: linear-gradient(180deg, var(--color-surface) 0%, rgba(33, 128, 141, 0.05) 100%);
+      background: linear-gradient(180deg, var(--color-surface) 0%, rgba(185, 28, 28, 0.05) 100%);
       border-left: 3px solid var(--color-primary);
       padding: 24px 16px;
       overflow-y: auto;
@@ -1174,7 +1217,7 @@
 
     .palette-btn:hover {
       transform: scale(1.1);
-      box-shadow: 0 4px 12px rgba(33, 128, 141, 0.3);
+      box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
     }
 
     .palette-btn.answered {
@@ -1193,7 +1236,7 @@
     }
 
     .palette-btn.current {
-      box-shadow: 0 0 12px rgba(33, 128, 141, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.1);
+      box-shadow: 0 0 12px rgba(185, 28, 28, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.1);
       transform: scale(1.15);
     }
 
@@ -1276,7 +1319,7 @@
 
     .stat-toggle.active {
       background: var(--color-primary);
-      box-shadow: 0 0 20px rgba(217, 70, 166, 0.5), inset 0 0 15px rgba(255,255,255,0.1);
+      box-shadow: 0 0 20px rgba(185, 28, 28, 0.5), inset 0 0 15px rgba(255,255,255,0.1);
     }
 
     .stat-toggle.active .stat-value,
@@ -1696,6 +1739,111 @@
 
   <div id="config-screen" class="screen active">
     <div class="config-container">
+      <!-- Assamese Gamusa Logo -->
+      <div class="gamusa-logo-container">
+        <svg class="gamusa-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="gamusaGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <pattern id="flowerPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              <circle cx="10" cy="10" r="2.5" fill="#c41e3a"/>
+              <circle cx="10" cy="6" r="1" fill="#c41e3a"/>
+              <circle cx="10" cy="14" r="1" fill="#c41e3a"/>
+              <circle cx="6" cy="10" r="1" fill="#c41e3a"/>
+              <circle cx="14" cy="10" r="1" fill="#c41e3a"/>
+              <circle cx="7" cy="7" r="0.8" fill="#c41e3a"/>
+              <circle cx="13" cy="7" r="0.8" fill="#c41e3a"/>
+              <circle cx="7" cy="13" r="0.8" fill="#c41e3a"/>
+              <circle cx="13" cy="13" r="0.8" fill="#c41e3a"/>
+            </pattern>
+          </defs>
+          
+          <!-- Outer Red Border -->
+          <rect x="2" y="2" width="196" height="96" rx="2" fill="none" stroke="#c41e3a" stroke-width="3" filter="url(#gamusaGlow)"/>
+          
+          <!-- Second Red Line -->
+          <rect x="6" y="6" width="188" height="88" rx="1" fill="none" stroke="#c41e3a" stroke-width="1.5"/>
+          
+          <!-- Third Red Line -->
+          <rect x="9" y="9" width="182" height="82" rx="1" fill="none" stroke="#c41e3a" stroke-width="1"/>
+          
+          <!-- White Inner Background -->
+          <rect x="12" y="12" width="176" height="76" fill="#ffffff"/>
+          
+          <!-- Top Red Border Band -->
+          <rect x="12" y="12" width="176" height="8" fill="#c41e3a"/>
+          <rect x="12" y="12" width="176" height="2" fill="#a01830"/>
+          <rect x="12" y="18" width="176" height="1" fill="#a01830"/>
+          
+          <!-- Bottom Red Border Band -->
+          <rect x="12" y="80" width="176" height="8" fill="#c41e3a"/>
+          <rect x="12" y="86" width="176" height="2" fill="#a01830"/>
+          <rect x="12" y="80" width="176" height="1" fill="#a01830"/>
+          
+          <!-- Left Decorative Border -->
+          <rect x="12" y="20" width="18" height="60" fill="#fff5f5"/>
+          <g fill="#c41e3a">
+            <rect x="12" y="20" width="2" height="60"/>
+            <rect x="16" y="20" width="1" height="60"/>
+            <!-- Diamond Pattern Left -->
+            <polygon points="22,25 26,30 22,35 18,30"/>
+            <polygon points="22,40 26,45 22,50 18,45"/>
+            <polygon points="22,55 26,60 22,65 18,60"/>
+            <polygon points="22,70 26,75 22,80 18,75"/>
+            <circle cx="22" cy="32.5" r="1.5"/>
+            <circle cx="22" cy="47.5" r="1.5"/>
+            <circle cx="22" cy="62.5" r="1.5"/>
+          </g>
+          
+          <!-- Right Decorative Border -->
+          <rect x="170" y="20" width="18" height="60" fill="#fff5f5"/>
+          <g fill="#c41e3a">
+            <rect x="186" y="20" width="2" height="60"/>
+            <rect x="183" y="20" width="1" height="60"/>
+            <!-- Diamond Pattern Right -->
+            <polygon points="178,25 182,30 178,35 174,30"/>
+            <polygon points="178,40 182,45 178,50 174,45"/>
+            <polygon points="178,55 182,60 178,65 174,60"/>
+            <polygon points="178,70 182,75 178,80 174,75"/>
+            <circle cx="178" cy="32.5" r="1.5"/>
+            <circle cx="178" cy="47.5" r="1.5"/>
+            <circle cx="178" cy="62.5" r="1.5"/>
+          </g>
+          
+          <!-- Center White Area with Flower Pattern -->
+          <rect x="30" y="20" width="140" height="60" fill="url(#flowerPattern)" opacity="0.9"/>
+          
+          <!-- Additional scattered flowers for authenticity -->
+          <g fill="#c41e3a" opacity="0.85">
+            <!-- Row 1 -->
+            <circle cx="45" cy="30" r="2"/><circle cx="45" cy="27" r="0.8"/><circle cx="45" cy="33" r="0.8"/><circle cx="42" cy="30" r="0.8"/><circle cx="48" cy="30" r="0.8"/>
+            <circle cx="75" cy="30" r="2"/><circle cx="75" cy="27" r="0.8"/><circle cx="75" cy="33" r="0.8"/><circle cx="72" cy="30" r="0.8"/><circle cx="78" cy="30" r="0.8"/>
+            <circle cx="105" cy="30" r="2"/><circle cx="105" cy="27" r="0.8"/><circle cx="105" cy="33" r="0.8"/><circle cx="102" cy="30" r="0.8"/><circle cx="108" cy="30" r="0.8"/>
+            <circle cx="135" cy="30" r="2"/><circle cx="135" cy="27" r="0.8"/><circle cx="135" cy="33" r="0.8"/><circle cx="132" cy="30" r="0.8"/><circle cx="138" cy="30" r="0.8"/>
+            <circle cx="155" cy="30" r="2"/><circle cx="155" cy="27" r="0.8"/><circle cx="155" cy="33" r="0.8"/><circle cx="152" cy="30" r="0.8"/><circle cx="158" cy="30" r="0.8"/>
+            <!-- Row 2 -->
+            <circle cx="55" cy="45" r="2"/><circle cx="55" cy="42" r="0.8"/><circle cx="55" cy="48" r="0.8"/><circle cx="52" cy="45" r="0.8"/><circle cx="58" cy="45" r="0.8"/>
+            <circle cx="85" cy="45" r="2"/><circle cx="85" cy="42" r="0.8"/><circle cx="85" cy="48" r="0.8"/><circle cx="82" cy="45" r="0.8"/><circle cx="88" cy="45" r="0.8"/>
+            <circle cx="115" cy="45" r="2"/><circle cx="115" cy="42" r="0.8"/><circle cx="115" cy="48" r="0.8"/><circle cx="112" cy="45" r="0.8"/><circle cx="118" cy="45" r="0.8"/>
+            <circle cx="145" cy="45" r="2"/><circle cx="145" cy="42" r="0.8"/><circle cx="145" cy="48" r="0.8"/><circle cx="142" cy="45" r="0.8"/><circle cx="148" cy="45" r="0.8"/>
+            <!-- Row 3 -->
+            <circle cx="65" cy="60" r="2"/><circle cx="65" cy="57" r="0.8"/><circle cx="65" cy="63" r="0.8"/><circle cx="62" cy="60" r="0.8"/><circle cx="68" cy="60" r="0.8"/>
+            <circle cx="95" cy="60" r="2"/><circle cx="95" cy="57" r="0.8"/><circle cx="95" cy="63" r="0.8"/><circle cx="92" cy="60" r="0.8"/><circle cx="98" cy="60" r="0.8"/>
+            <circle cx="125" cy="60" r="2"/><circle cx="125" cy="57" r="0.8"/><circle cx="125" cy="63" r="0.8"/><circle cx="122" cy="60" r="0.8"/><circle cx="128" cy="60" r="0.8"/>
+            <circle cx="155" cy="60" r="2"/><circle cx="155" cy="57" r="0.8"/><circle cx="155" cy="63" r="0.8"/><circle cx="152" cy="60" r="0.8"/><circle cx="158" cy="60" r="0.8"/>
+            <!-- Row 4 -->
+            <circle cx="45" cy="72" r="2"/><circle cx="45" cy="69" r="0.8"/><circle cx="45" cy="75" r="0.8"/><circle cx="42" cy="72" r="0.8"/><circle cx="48" cy="72" r="0.8"/>
+            <circle cx="75" cy="72" r="2"/><circle cx="75" cy="69" r="0.8"/><circle cx="75" cy="75" r="0.8"/><circle cx="72" cy="72" r="0.8"/><circle cx="78" cy="72" r="0.8"/>
+            <circle cx="105" cy="72" r="2"/><circle cx="105" cy="69" r="0.8"/><circle cx="105" cy="75" r="0.8"/><circle cx="102" cy="72" r="0.8"/><circle cx="108" cy="72" r="0.8"/>
+            <circle cx="135" cy="72" r="2"/><circle cx="135" cy="69" r="0.8"/><circle cx="135" cy="75" r="0.8"/><circle cx="132" cy="72" r="0.8"/><circle cx="138" cy="72" r="0.8"/>
+          </g>
+        </svg>
+      </div>
       <h1 class="gamusa-heading">Assami</h1>
       <div class="heading-accent"></div>
       <p class="subheader-tagline">An Unlimited Mock Test Platform</p>
@@ -1901,7 +2049,7 @@
           padding: 28px 10px 22px 10px;
           background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-background) 100%);
           border-top: 2px solid var(--color-border);
-          box-shadow: 0 -2px 16px rgba(33, 128, 141, 0.08);
+          box-shadow: 0 -2px 16px rgba(185, 28, 28, 0.08);
           font-family: var(--font-family-base);
         }
 
@@ -1923,8 +2071,8 @@
           padding: 12px 24px;
           border-radius: var(--radius-lg);
           font-weight: 500;
-          background: linear-gradient(135deg, rgba(33, 128, 141, 0.12) 0%, rgba(33, 128, 141, 0.05) 100%);
-          border: 2px solid rgba(33, 128, 141, 0.2);
+          background: linear-gradient(135deg, rgba(185, 28, 28, 0.12) 0%, rgba(185, 28, 28, 0.05) 100%);
+          border: 2px solid rgba(185, 28, 28, 0.2);
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           cursor: pointer;
           position: relative;
@@ -1939,7 +2087,7 @@
           width: 0;
           height: 0;
           border-radius: 50%;
-          background: rgba(33, 128, 141, 0.15);
+          background: rgba(185, 28, 28, 0.15);
           transform: translate(-50%, -50%);
           transition: width 0.6s, height 0.6s;
         }
@@ -1951,7 +2099,7 @@
 
         .visitor-counter:hover {
           transform: translateY(-4px) scale(1.05);
-          box-shadow: 0 8px 24px rgba(33, 128, 141, 0.25), 0 0 0 4px rgba(33, 128, 141, 0.1);
+          box-shadow: 0 8px 24px rgba(185, 28, 28, 0.25), 0 0 0 4px rgba(185, 28, 28, 0.1);
           border-color: var(--color-primary);
         }
 
@@ -2016,14 +2164,14 @@
           padding: 12px 24px;
           border-radius: var(--radius-lg);
           font-size: 16px;
-          background: linear-gradient(135deg, rgba(33, 128, 141, 0.08) 0%, rgba(33, 128, 141, 0.03) 100%);
-          border: 2px solid rgba(33, 128, 141, 0.15);
+          background: linear-gradient(135deg, rgba(185, 28, 28, 0.08) 0%, rgba(185, 28, 28, 0.03) 100%);
+          border: 2px solid rgba(185, 28, 28, 0.15);
           transition: all 0.3s ease;
         }
 
         .footer-contact:hover {
           transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(33, 128, 141, 0.2);
+          box-shadow: 0 4px 12px rgba(185, 28, 28, 0.2);
           border-color: var(--color-primary);
         }
 
@@ -2042,7 +2190,7 @@
 
         .footer-contact .contact-email:hover {
           color: var(--color-primary-hover);
-          text-shadow: 0 2px 4px rgba(33, 128, 141, 0.3);
+          text-shadow: 0 2px 4px rgba(185, 28, 28, 0.3);
         }
 
         @media (max-width: 700px) {
