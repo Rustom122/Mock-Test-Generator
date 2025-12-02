@@ -774,6 +774,24 @@
           </div>
 
           <div class="form-group">
+            <label>Difficulty Levels (Select at least one)</label>
+            <div class="checkbox-grid" id="subject-difficulty-checkboxes">
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-diff-easy" value="Easy" checked>
+                <label for="subj-diff-easy">Easy</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-diff-medium" value="Medium" checked>
+                <label for="subj-diff-medium">Medium</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="subj-diff-hard" value="Hard" checked>
+                <label for="subj-diff-hard">Hard</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label>Number of Questions</label>
             <input type="number" id="subject-questions" value="60" min="1">
           </div>
@@ -1083,11 +1101,16 @@
         document.getElementById('full-test-mode').style.display = 'none';
         document.getElementById('subject-wise-mode').style.display = 'block';
         document.getElementById('subject-selection').style.display = 'block';
+        populateSubjects();
       }
     }
 
     function populateSubjects() {
       const subjects = [...new Set(appState.allQuestions.map(q => q.subject).filter(Boolean))];
+      console.log('All subjects found:', subjects);
+      console.log('Total questions:', appState.allQuestions.length);
+      console.log('Sample question subjects:', appState.allQuestions.slice(0, 5).map(q => q.subject));
+      
       const container = document.getElementById('subject-checkboxes');
       container.innerHTML = '';
       
@@ -1238,17 +1261,43 @@
       const csvText = await response.text();
       const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
       
+      // Helper function to find column name with flexible matching
+      function findColumn(row, possibleNames) {
+        for (let name of possibleNames) {
+          if (row[name]) return row[name];
+        }
+        // Try case-insensitive and whitespace-insensitive matching
+        const keys = Object.keys(row);
+        for (let key of keys) {
+          const normalizedKey = key.trim().toLowerCase();
+          for (let name of possibleNames) {
+            if (normalizedKey === name.toLowerCase()) return row[key];
+          }
+        }
+        return null;
+      }
+      
+      if (parsed.data.length > 0) {
+        console.log('CSV Column Headers:', Object.keys(parsed.data[0]));
+        console.log('First row data:', parsed.data[0]);
+      }
+      
       return parsed.data.map((row, index) => ({
         id: index + 1,
-        question: row.Question || '',
-        options: [row.OptionA || '', row.OptionB || '', row.OptionC || '', row.OptionD || ''],
-        correctAnswer: parseInt(row.Answer) || 0,
-        difficulty: row.Difficulty || 'Medium',
-        subject: row.Subject || 'General',
-        chapter: row.Chapter || 'General',
-        topic: row.Topic || 'General',
-        explanation: row.Explanation || 'No explanation available.',
-        questionType: row.QuestionType || 'Theoretical'
+        question: findColumn(row, ['Question']) || '',
+        options: [
+          findColumn(row, ['OptionA', 'Option A']) || '',
+          findColumn(row, ['OptionB', 'Option B']) || '',
+          findColumn(row, ['OptionC', 'Option C']) || '',
+          findColumn(row, ['OptionD', 'Option D']) || ''
+        ],
+        correctAnswer: parseInt(findColumn(row, ['Answer']) || 0) || 0,
+        difficulty: findColumn(row, ['Difficulty']) || 'Medium',
+        subject: findColumn(row, ['Subject', 'Category']) || 'General',
+        chapter: findColumn(row, ['Chapter']) || 'General',
+        topic: findColumn(row, ['Topic']) || 'General',
+        explanation: findColumn(row, ['Explanation']) || 'No explanation available.',
+        questionType: findColumn(row, ['QuestionType', 'Question Type']) || 'Theoretical'
       }));
     }
 
@@ -1288,12 +1337,13 @@ function classifySection(subject) {
       return [...techQuestions, ...nonTechQuestions];
     }
 
-    function filterQuestionsSubjectWise(all, subjects, chapters, topics, numQuestions, questionTypes) {
+    function filterQuestionsSubjectWise(all, subjects, chapters, topics, numQuestions, questionTypes, difficulties) {
       let filtered = all.filter(q => 
         subjects.includes(q.subject) &&
         chapters.includes(q.chapter) &&
         (topics.length === 0 || topics.includes(q.topic)) &&
-        questionTypes.includes(q.questionType)
+        questionTypes.includes(q.questionType) &&
+        (difficulties.length === 0 || difficulties.includes(q.difficulty))
       );
       return shuffleArray(filtered).slice(0, numQuestions);
     }
@@ -1347,6 +1397,7 @@ function classifySection(subject) {
           const selectedChapters = Array.from(document.querySelectorAll('#chapter-checkboxes input:checked')).map(cb => cb.value);
           const selectedTopics = Array.from(document.querySelectorAll('#topic-checkboxes input:checked')).map(cb => cb.value);
           const subjectQuestionTypes = Array.from(document.querySelectorAll('#subject-question-type-checkboxes input:checked')).map(cb => cb.value);
+          const subjectDifficulties = Array.from(document.querySelectorAll('#subject-difficulty-checkboxes input:checked')).map(cb => cb.value);
           const numQ = parseInt(document.getElementById('subject-questions').value) || 60;
           
           if (selectedSubjects.length === 0) {
@@ -1373,7 +1424,15 @@ function classifySection(subject) {
             return;
           }
           
-          filtered = filterQuestionsSubjectWise(appState.allQuestions, selectedSubjects, selectedChapters, selectedTopics, numQ, subjectQuestionTypes);
+          if (subjectDifficulties.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration', 
+              'Please select at least one difficulty level.', 
+              [{ text: 'OK', primary: true, action: hideModal }]);
+            return;
+          }
+          
+          filtered = filterQuestionsSubjectWise(appState.allQuestions, selectedSubjects, selectedChapters, selectedTopics, numQ, subjectQuestionTypes, subjectDifficulties);
           duration = parseInt(document.getElementById('subject-duration').value) || 90;
         }
         
@@ -1617,7 +1676,7 @@ function classifySection(subject) {
       appState.isAutoSubmit = false;
       const filtered = appState.examMode === 'full' 
         ? filterQuestionsFullTest(appState.allQuestions, appState.config.techCount || 45, appState.config.nonTechCount || 15, ['Easy', 'Medium', 'Hard'], ['Numerical', 'Theoretical', 'Conceptual'])
-        : filterQuestionsSubjectWise(appState.allQuestions, appState.selectedSubjects, appState.selectedChapters, appState.selectedTopics, appState.examQuestions.length, ['Numerical', 'Theoretical', 'Conceptual']);
+        : filterQuestionsSubjectWise(appState.allQuestions, appState.selectedSubjects, appState.selectedChapters, appState.selectedTopics, appState.examQuestions.length, ['Numerical', 'Theoretical', 'Conceptual'], ['Easy', 'Medium', 'Hard']);
       appState.examQuestions = prepareExamQuestions(filtered);
       appState.userAnswers = appState.examQuestions.map(() => ({ selectedOption: null, visited: false, markedForReview: false }));
       switchScreen('exam');
