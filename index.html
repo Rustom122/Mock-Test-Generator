@@ -1688,6 +1688,62 @@
       box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
     }
 
+    .section-toggle-container {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-toggle-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .section-toggle-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .section-toggle-btn {
+      flex: 1;
+      min-width: 70px;
+      padding: 8px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--color-border);
+      background: var(--color-background);
+      color: var(--color-text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .section-toggle-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .section-toggle-btn.active {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+
+    .section-counts {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--color-text-secondary);
+    }
+
     .palette-header {
       font-size: 16px;
       font-weight: 700;
@@ -2831,6 +2887,18 @@
         </div>
       </div>
       <div class="palette-container">
+        <div id="section-toggle-container" class="section-toggle-container" style="display: none;">
+          <div class="section-toggle-header">Section Navigation</div>
+          <div class="section-toggle-buttons">
+            <button class="section-toggle-btn active" id="btn-all-sections" onclick="filterBySection('all')">All</button>
+            <button class="section-toggle-btn" id="btn-non-tech" onclick="filterBySection('Non-Technical')">Non-Technical</button>
+            <button class="section-toggle-btn" id="btn-tech" onclick="filterBySection('Technical')">Technical</button>
+          </div>
+          <div class="section-counts">
+            <span id="non-tech-count">Non-Tech: 0</span>
+            <span id="tech-count">Tech: 0</span>
+          </div>
+        </div>
         <div class="palette-header">Question Palette</div>
         <div class="palette-grid" id="palette-grid"></div>
         <div class="palette-legend">
@@ -3032,7 +3100,9 @@
       selectedExam: null,
       branches: [],
       exams: [],
-      resultsFilter: new Set()
+      resultsFilter: new Set(),
+      sectionFilter: 'all',
+      filteredQuestionIndices: []
     };
 
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjJ_eWAoVK2SXvTMvN0BM4SHo60i-0WE6UKmu4rTao2sLynOMvoQ427mHd2u9YWGeNjOYncb2S3YAf/pub?output=csv';
@@ -3495,8 +3565,8 @@
         console.log('First row data:', parsed.data[0]);
       }
 
-      return parsed.data.map((row, index) => ({
-        id: index + 1,
+      const allQuestions = parsed.data.map((row, index) => ({
+        id: findColumn(row, ['Id', 'ID', 'id']) || String(index + 1),
         question: findColumn(row, ['Question']) || '',
         options: [
           findColumn(row, ['OptionA', 'Option A']) || '',
@@ -3512,12 +3582,24 @@
         explanation: findColumn(row, ['Explanation']) || 'No explanation available.',
         questionType: findColumn(row, ['QuestionType', 'Question Type']) || 'Theoretical',
         branch: findColumn(row, ['Branch']) || 'General',
-        examType: findColumn(row, ['Exam Type', 'ExamType']) || 'General'
+        examType: findColumn(row, ['Exam Type', 'ExamType']) || 'General',
+        status: (findColumn(row, ['Status', 'status']) || 'Yes').trim().toLowerCase()
       }));
+      
+      // Filter questions by Status - only include questions where Status is "Yes"
+      return allQuestions.filter(q => q.status === 'yes');
     }
 
     function prepareExamQuestions(filtered) {
-      let shuffled = shuffleArray(filtered);
+      // Remove duplicate questions based on ID
+      const seenIds = new Set();
+      const uniqueFiltered = filtered.filter(q => {
+        if (seenIds.has(q.id)) return false;
+        seenIds.add(q.id);
+        return true;
+      });
+      
+      let shuffled = shuffleArray(uniqueFiltered);
       return shuffled.map(q => {
         const optionsWithIndex = q.options.map((opt, idx) => ({option: opt, originalIndex: idx}));
         const shuffledOpts = shuffleArray(optionsWithIndex);
@@ -3666,6 +3748,7 @@
         appState.examQuestions = prepareExamQuestions(filtered);
         appState.userAnswers = appState.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
         appState.currentQuestionIndex = 0;
+        appState.sectionFilter = 'all';
         appState.config = {
           duration,
           techCount: techQ,
@@ -3674,6 +3757,18 @@
 
         hideLoadingOverlay();
         switchScreen('exam');
+        
+        // Show section toggle only in Full Test mode
+        const sectionToggle = document.getElementById('section-toggle-container');
+        if (appState.examMode === 'full') {
+          sectionToggle.style.display = 'block';
+          // Reset section filter buttons
+          document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+          document.getElementById('btn-all-sections').classList.add('active');
+        } else {
+          sectionToggle.style.display = 'none';
+        }
+        
         startTimer(duration);
         renderPalette();
         renderQuestion(0);
@@ -3692,7 +3787,7 @@
       appState.currentQuestionIndex = index;
 
       document.getElementById('question-number').textContent = `Question ${index + 1} of ${appState.examQuestions.length}`;
-      document.getElementById('current-section').textContent = q.subject || 'General';
+      document.getElementById('current-section').textContent = `ID: ${q.id} | ${q.subject || 'General'}`;
       document.getElementById('question-text').innerHTML = q.question;
 
       const container = document.getElementById('options-container');
@@ -3723,14 +3818,61 @@
     function renderPalette() {
       const grid = document.getElementById('palette-grid');
       grid.innerHTML = '';
+      
+      // Calculate section counts
+      let techCount = 0, nonTechCount = 0;
       appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        if (section === 'Technical') techCount++;
+        else nonTechCount++;
+      });
+      
+      // Update section counts display
+      document.getElementById('non-tech-count').textContent = `Non-Tech: ${nonTechCount}`;
+      document.getElementById('tech-count').textContent = `Tech: ${techCount}`;
+      
+      // Filter questions based on current section filter
+      appState.filteredQuestionIndices = [];
+      appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        const shouldShow = appState.sectionFilter === 'all' || 
+                          (appState.sectionFilter === 'Technical' && section === 'Technical') ||
+                          (appState.sectionFilter === 'Non-Technical' && section === 'Non-Technical');
+        
+        if (shouldShow) {
+          appState.filteredQuestionIndices.push(i);
+        }
+        
         const btn = document.createElement('button');
         btn.textContent = i + 1;
         btn.className = 'palette-btn';
         btn.id = `palette-${i}`;
         btn.onclick = () => renderQuestion(i);
+        btn.style.display = shouldShow ? 'block' : 'none';
         grid.appendChild(btn);
       });
+    }
+    
+    function filterBySection(section) {
+      appState.sectionFilter = section;
+      
+      // Update button states
+      document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+      if (section === 'all') document.getElementById('btn-all-sections').classList.add('active');
+      else if (section === 'Non-Technical') document.getElementById('btn-non-tech').classList.add('active');
+      else if (section === 'Technical') document.getElementById('btn-tech').classList.add('active');
+      
+      // Re-render palette with filtered questions
+      renderPalette();
+      updatePalette();
+      
+      // Navigate to first visible question in filtered section
+      if (appState.filteredQuestionIndices.length > 0) {
+        const currentVisible = appState.filteredQuestionIndices.includes(appState.currentQuestionIndex);
+        if (!currentVisible) {
+          renderQuestion(appState.filteredQuestionIndices[0]);
+        }
+      }
     }
 
     function updatePalette() {
@@ -3752,8 +3894,17 @@
     }
 
     function navigateQuestion(delta) {
-      const newIndex = appState.currentQuestionIndex + delta;
-      if (newIndex >= 0 && newIndex < appState.examQuestions.length) renderQuestion(newIndex);
+      // If section filter is active, navigate within filtered questions
+      if (appState.sectionFilter !== 'all' && appState.filteredQuestionIndices.length > 0) {
+        const currentFilteredIdx = appState.filteredQuestionIndices.indexOf(appState.currentQuestionIndex);
+        const newFilteredIdx = currentFilteredIdx + delta;
+        if (newFilteredIdx >= 0 && newFilteredIdx < appState.filteredQuestionIndices.length) {
+          renderQuestion(appState.filteredQuestionIndices[newFilteredIdx]);
+        }
+      } else {
+        const newIndex = appState.currentQuestionIndex + delta;
+        if (newIndex >= 0 && newIndex < appState.examQuestions.length) renderQuestion(newIndex);
+      }
     }
 
     function saveAndNext() {
@@ -3887,7 +4038,7 @@
 
         const div = document.createElement('div');
         div.className = `question-review ${isCorrect ? 'correct' : 'incorrect'}`;
-        let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
+        let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">ID: ${q.id}</span> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
         html += `<div class="question-text">${q.question}</div><div style="margin-top: 16px;">`;
         q.options.forEach((opt, j) => {
           const isUser = ans.selectedOption === j;
@@ -3897,10 +4048,15 @@
           if (isCorrectOpt) className += ' correct-answer';
           html += `<div class="${className}"><strong>${['A', 'B', 'C', 'D'][j]}.</strong> ${opt} ${isUser ? '<span class="badge">Your Answer</span>' : ''} ${isCorrectOpt ? '<span class="badge success">Correct</span>' : ''}</div>`;
         });
-        html += `</div><div class="explanation"><strong>Explanation:</strong> ${q.explanation}</div>`;
+        html += `</div><div class="explanation"><strong>Explanation:</strong> <span class="explanation-text">${q.explanation}</span></div>`;
         div.innerHTML = html;
         reviewContainer.appendChild(div);
       });
+      
+      // Re-render MathJax for all explanations in results
+      if (window.MathJax) {
+        MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      }
     }
 
     function renderResults() {
@@ -3951,10 +4107,57 @@
 
       function stripLatex(text) {
         if (!text) return '';
+        // Remove $$ and $ delimiters
         text = text.replace(/\$\$(.*?)\$\$/g, '$1').replace(/\$(.*?)\$/g, '$1');
-        text = text.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)').replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
-        text = text.replace(/\\phi/g, 'φ').replace(/\\theta/g, 'θ').replace(/\\omega/g, 'ω').replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β').replace(/\\sum/g, '∑').replace(/\\times/g, '×').replace(/\\pm/g, '±').replace(/\\_/g, '_').replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
+        // Handle fractions
+        text = text.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+        // Handle sqrt
+        text = text.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+        // Handle subscripts: I_r becomes Iᵣ, I_{ab} becomes Iₐᵦ
+        text = text.replace(/([A-Za-z])_\{([^}]+)\}/g, (match, base, sub) => base + convertToSubscript(sub));
+        text = text.replace(/([A-Za-z])_([A-Za-z0-9])/g, (match, base, sub) => base + convertToSubscript(sub));
+        // Handle superscripts: x^2 becomes x², x^{2n} becomes x²ⁿ
+        text = text.replace(/\^(\{([^}]+)\}|([0-9]+))/g, (match, full, braced, simple) => convertToSuperscript(braced || simple));
+        // Greek letters
+        text = text.replace(/\\phi/g, 'φ').replace(/\\Phi/g, 'Φ');
+        text = text.replace(/\\theta/g, 'θ').replace(/\\Theta/g, 'Θ');
+        text = text.replace(/\\omega/g, 'ω').replace(/\\Omega/g, 'Ω');
+        text = text.replace(/\\alpha/g, 'α').replace(/\\Alpha/g, 'Α');
+        text = text.replace(/\\beta/g, 'β').replace(/\\Beta/g, 'Β');
+        text = text.replace(/\\gamma/g, 'γ').replace(/\\Gamma/g, 'Γ');
+        text = text.replace(/\\delta/g, 'δ').replace(/\\Delta/g, 'Δ');
+        text = text.replace(/\\pi/g, 'π').replace(/\\Pi/g, 'Π');
+        text = text.replace(/\\sigma/g, 'σ').replace(/\\Sigma/g, 'Σ');
+        text = text.replace(/\\mu/g, 'μ').replace(/\\eta/g, 'η');
+        text = text.replace(/\\lambda/g, 'λ').replace(/\\Lambda/g, 'Λ');
+        text = text.replace(/\\rho/g, 'ρ').replace(/\\tau/g, 'τ');
+        // Math symbols
+        text = text.replace(/\\sum/g, '∑').replace(/\\prod/g, '∏');
+        text = text.replace(/\\times/g, '×').replace(/\\cdot/g, '·');
+        text = text.replace(/\\pm/g, '±').replace(/\\mp/g, '∓');
+        text = text.replace(/\\div/g, '÷').replace(/\\neq/g, '≠');
+        text = text.replace(/\\leq/g, '≤').replace(/\\geq/g, '≥');
+        text = text.replace(/\\approx/g, '≈').replace(/\\infty/g, '∞');
+        text = text.replace(/\\rightarrow/g, '→').replace(/\\leftarrow/g, '←');
+        text = text.replace(/\\degree/g, '°').replace(/\\circ/g, '°');
+        text = text.replace(/\\_/g, '_');
+        // Clean up remaining LaTeX commands and braces
+        text = text.replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
         return text.trim();
+      }
+      
+      function convertToSubscript(str) {
+        const subMap = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
+          'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ',
+          '+':'₊','-':'₋','=':'₌','(':'₍',')':'₎'};
+        return str.split('').map(c => subMap[c] || c).join('');
+      }
+      
+      function convertToSuperscript(str) {
+        const supMap = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
+          'a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','i':'ⁱ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','n':'ⁿ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ',
+          '+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾'};
+        return str.split('').map(c => supMap[c] || c).join('');
       }
 
       let yPos = 15;
