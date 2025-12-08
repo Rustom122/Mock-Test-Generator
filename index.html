@@ -3,8 +3,15 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>An Ai Based Mock Test Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Assami - An AI Based Mock Test Platform</title>
+
+  <!-- Professional Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
 
   <!-- CDN Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
@@ -43,7 +50,7 @@
   </script>
 
   <style>
-    /* CSS Design System */
+    /* CSS Design System - Optimized */
     :root {
       --color-background: #000000;
       --color-surface: #000000;
@@ -58,10 +65,26 @@
       --color-success: #06d6a0;
       --color-error: #ff5459;
       --color-warning: #f4a261;
-      --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-family-base: 'Poppins', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-family-display: 'Poppins', 'Inter', sans-serif;
+      --font-family-numbers: 'Orbitron', 'Poppins', sans-serif;
       --radius-base: 8px;
       --radius-lg: 12px;
       --radius-full: 9999px;
+      --glow-red: 0 0 20px rgba(185, 28, 28, 0.6), 0 0 40px rgba(185, 28, 28, 0.4), 0 0 60px rgba(185, 28, 28, 0.2);
+      --glow-red-intense: 0 0 30px rgba(220, 38, 38, 0.8), 0 0 60px rgba(185, 28, 28, 0.5), 0 0 90px rgba(185, 28, 28, 0.3);
+    }
+
+    /* Smooth GPU-accelerated animations */
+    * {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      * {
+        scroll-behavior: smooth;
+      }
     }
 
     [data-theme="light-purple"] {
@@ -185,70 +208,27 @@
       justify-content: center;
       align-items: center;
       margin-bottom: -5px;
-      animation: logoFloat 4s ease-in-out infinite, fadeInLogo 1s ease-out;
     }
 
     .gamusa-logo {
       width: 180px;
       height: 90px;
-      filter: drop-shadow(0 0 12px rgba(196, 30, 58, 0.7))
-              drop-shadow(0 0 25px rgba(196, 30, 58, 0.4))
-              drop-shadow(0 0 40px rgba(196, 30, 58, 0.2));
-      animation: logoGlow 3s ease-in-out infinite;
-      transition: all 0.4s ease;
+      filter: drop-shadow(0 0 6px rgba(196, 30, 58, 0.4)) drop-shadow(0 0 12px rgba(196, 30, 58, 0.2));
+      transition: transform 0.2s ease, filter 0.2s ease;
     }
 
     .gamusa-logo:hover {
-      transform: scale(1.08);
-      filter: drop-shadow(0 0 18px rgba(196, 30, 58, 0.9))
-              drop-shadow(0 0 35px rgba(196, 30, 58, 0.6))
-              drop-shadow(0 0 55px rgba(196, 30, 58, 0.35));
-    }
-
-    @keyframes logoGlow {
-      0%, 100% {
-        filter: drop-shadow(0 0 12px rgba(196, 30, 58, 0.7))
-                drop-shadow(0 0 25px rgba(196, 30, 58, 0.4))
-                drop-shadow(0 0 40px rgba(196, 30, 58, 0.2));
-      }
-      50% {
-        filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.9))
-                drop-shadow(0 0 40px rgba(196, 30, 58, 0.5))
-                drop-shadow(0 0 60px rgba(196, 30, 58, 0.3));
-      }
-    }
-
-    @keyframes logoFloat {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-8px);
-      }
-    }
-
-    @keyframes fadeInLogo {
-      from {
-        opacity: 0;
-        transform: translateY(-20px) scale(0.8);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-      }
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 10px rgba(196, 30, 58, 0.5)) drop-shadow(0 0 18px rgba(196, 30, 58, 0.3));
     }
 
     /* Light theme logo adjustments */
     [data-theme="light-purple"] .gamusa-logo {
-      filter: drop-shadow(0 0 12px rgba(124, 58, 237, 0.5))
-              drop-shadow(0 0 25px rgba(124, 58, 237, 0.3))
-              drop-shadow(0 0 40px rgba(124, 58, 237, 0.15));
+      filter: drop-shadow(0 0 6px rgba(124, 58, 237, 0.3)) drop-shadow(0 0 12px rgba(124, 58, 237, 0.15));
     }
 
     [data-theme="light-purple"] .gamusa-logo:hover {
-      filter: drop-shadow(0 0 18px rgba(124, 58, 237, 0.7))
-              drop-shadow(0 0 35px rgba(124, 58, 237, 0.4))
-              drop-shadow(0 0 55px rgba(124, 58, 237, 0.25));
+      filter: drop-shadow(0 0 10px rgba(124, 58, 237, 0.4)) drop-shadow(0 0 18px rgba(124, 58, 237, 0.25));
     }
 
     .config-container h1 {
@@ -275,8 +255,15 @@
     }
 
     @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     .config-container h1:hover {
@@ -373,16 +360,14 @@
 
     /* Assamese Gamusa Pattern Styling - Professional */
     .gamusa-heading {
-      background: linear-gradient(
-        135deg,
-        #c41e3a 0%,
-        #d32f2f 15%,
-        #ffffff 30%,
-        #c41e3a 45%,
-        #b71c1c 60%,
-        #ffffff 75%,
-        #d32f2f 100%
-      );
+      background: linear-gradient(135deg,
+          #c41e3a 0%,
+          #d32f2f 15%,
+          #ffffff 30%,
+          #c41e3a 45%,
+          #b71c1c 60%,
+          #ffffff 75%,
+          #d32f2f 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -396,8 +381,15 @@
     }
 
     @keyframes gamosaGradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     .gamusa-heading:hover {
@@ -423,8 +415,15 @@
     }
 
     @keyframes colorWaveTagline {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     /* Subheader Styling - Light Theme */
@@ -442,6 +441,7 @@
         opacity: 0;
         transform: translateY(20px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -449,8 +449,15 @@
     }
 
     @keyframes colorShiftSubheader {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
     }
 
     /* Accent line under heading */
@@ -467,17 +474,522 @@
     }
 
     @keyframes expandWidth {
-      from { width: 0; opacity: 1; }
-      to { width: 100px; opacity: 1; }
+      from {
+        width: 0;
+        opacity: 1;
+      }
+
+      to {
+        width: 100px;
+        opacity: 1;
+      }
     }
 
     @keyframes accentGlow {
-      0%, 100% { background-position: 0% 50%; box-shadow: 0 0 15px rgba(185, 28, 28, 0.6); }
-      50% { background-position: 100% 50%; box-shadow: 0 0 25px rgba(220, 38, 38, 0.8); }
+
+      0%,
+      100% {
+        background-position: 0% 50%;
+        box-shadow: 0 0 15px rgba(185, 28, 28, 0.6);
+      }
+
+      50% {
+        background-position: 100% 50%;
+        box-shadow: 0 0 25px rgba(220, 38, 38, 0.8);
+      }
     }
 
     [data-theme="light-purple"] .heading-accent {
       background: linear-gradient(90deg, #7c3aed, #ec4899);
+    }
+
+    /* Landing Page Styles - Full Screen, No Scroll */
+    .landing-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      height: 100dvh;
+      padding: 10px 20px;
+      padding-top: 0;
+      text-align: center;
+      overflow: hidden;
+      position: relative;
+      background: #000000;
+    }
+
+    /* Static subtle background */
+    .landing-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(185, 28, 28, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(185, 28, 28, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .landing-container>* {
+      position: relative;
+      z-index: 1;
+    }
+
+    .landing-logo {
+      margin-bottom: 5px;
+    }
+
+    .landing-logo .gamusa-logo {
+      width: clamp(140px, 18vw, 200px);
+      height: clamp(70px, 9vw, 100px);
+      filter: drop-shadow(0 0 8px rgba(196, 30, 58, 0.5)) drop-shadow(0 0 15px rgba(196, 30, 58, 0.3));
+    }
+
+    .landing-title {
+      font-size: clamp(48px, 10vw, 90px);
+      margin-top: 5px;
+      margin-bottom: 0;
+      font-family: var(--font-family-display);
+      font-weight: 900;
+      letter-spacing: -2px;
+      text-shadow: var(--glow-red);
+    }
+
+    .landing-tagline {
+      font-size: clamp(16px, 3vw, 26px);
+      font-weight: 600;
+      font-family: var(--font-family-display);
+      background: linear-gradient(90deg, #b91c1c, #dc2626, #ef4444, #dc2626, #b91c1c);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: colorWaveTagline 6s ease infinite;
+      margin-bottom: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    .landing-description {
+      font-size: clamp(13px, 2vw, 17px);
+      color: var(--color-text-secondary);
+      margin-bottom: clamp(15px, 3vh, 30px);
+      max-width: 450px;
+      font-family: var(--font-family-base);
+      font-weight: 400;
+      line-height: 1.5;
+      opacity: 0.9;
+    }
+
+    .start-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: clamp(14px, 2vh, 20px) clamp(28px, 4vw, 50px);
+      font-size: clamp(15px, 2vw, 19px);
+      font-weight: 700;
+      font-family: var(--font-family-display);
+      color: #ffffff;
+      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #b91c1c 100%);
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      box-shadow: 0 0 15px rgba(185, 28, 28, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .start-btn:hover {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 0 25px rgba(185, 28, 28, 0.6);
+      background: linear-gradient(135deg, #dc2626 0%, #ef4444 50%, #dc2626 100%);
+    }
+
+    .start-btn:active {
+      transform: scale(1.02);
+    }
+
+    .start-btn svg {
+      transition: transform 0.2s ease;
+    }
+
+    .start-btn:hover svg {
+      transform: translateX(3px);
+    }
+
+    /* Enhanced Feature Stats Section */
+    .landing-features {
+      display: flex;
+      gap: clamp(20px, 5vw, 60px);
+      margin-top: clamp(20px, 4vh, 45px);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .feature-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: clamp(12px, 2vh, 20px) clamp(16px, 2.5vw, 30px);
+      background: rgba(185, 28, 28, 0.08);
+      border: 1px solid rgba(185, 28, 28, 0.25);
+      border-radius: 16px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      min-width: clamp(90px, 15vw, 130px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-item::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at center, rgba(185, 28, 28, 0.2) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .feature-item:hover {
+      transform: translateY(-8px) scale(1.05);
+      border-color: rgba(220, 38, 38, 0.5);
+      box-shadow: var(--glow-red);
+    }
+
+    .feature-item:hover::before {
+      opacity: 1;
+    }
+
+    .feature-icon {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      font-family: var(--font-family-numbers);
+      color: var(--color-primary);
+      text-shadow: 0 0 20px rgba(185, 28, 28, 0.8), 0 0 40px rgba(185, 28, 28, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-number {
+      font-family: 'Orbitron', 'Poppins', -apple-system, sans-serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+      min-width: 50px;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .feature-text {
+      font-size: clamp(10px, 1.5vw, 13px);
+      color: var(--color-text);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-family: var(--font-family-display);
+      font-weight: 600;
+      opacity: 0.9;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Light theme landing */
+    [data-theme="light-purple"] .landing-tagline {
+      background: linear-gradient(90deg, #7c3aed, #ec4899, #3b82f6, #7c3aed);
+      background-size: 300% 300%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    [data-theme="light-purple"] .start-btn {
+      background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #7c3aed 100%);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+    }
+
+    [data-theme="light-purple"] .start-btn:hover {
+      box-shadow: 0 6px 16px rgba(124, 58, 237, 0.3);
+      background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 50%, #8b5cf6 100%);
+    }
+
+    [data-theme="light-purple"] .landing-container {
+      background: var(--color-background);
+    }
+
+    [data-theme="light-purple"] .landing-container::before {
+      background:
+        radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(236, 72, 153, 0.03) 0%, transparent 50%);
+    }
+
+    [data-theme="light-purple"] .landing-logo .gamusa-logo {
+      filter: drop-shadow(0 0 4px rgba(124, 58, 237, 0.2)) drop-shadow(0 0 8px rgba(124, 58, 237, 0.1));
+    }
+
+    [data-theme="light-purple"] .feature-item {
+      background: rgba(124, 58, 237, 0.08);
+      border-color: rgba(124, 58, 237, 0.25);
+    }
+
+    [data-theme="light-purple"] .feature-item:hover {
+      box-shadow: 0 0 20px rgba(124, 58, 237, 0.6), 0 0 40px rgba(124, 58, 237, 0.3);
+      border-color: rgba(124, 58, 237, 0.5);
+    }
+
+    /* Menu Header */
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 25px;
+      border-bottom: 1px solid var(--color-border);
+      margin-bottom: 15px;
+    }
+
+    .menu-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin: 0;
+    }
+
+    .menu-close-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--color-secondary);
+      color: var(--color-text);
+      font-size: 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .menu-close-btn:hover {
+      background: var(--color-primary);
+      color: white;
+    }
+
+    .menu-input {
+      width: 100%;
+      padding: 14px 18px;
+      border: 2px solid var(--color-border);
+      border-radius: 12px;
+      background: var(--color-surface);
+      color: var(--color-text);
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .menu-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 4px rgba(185, 28, 28, 0.15);
+    }
+
+    .menu-input::placeholder {
+      color: var(--color-text-secondary);
+    }
+
+    .menu-continue-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: calc(100% - 50px);
+      margin: 25px auto;
+      padding: 16px 24px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(185, 28, 28, 0.3);
+    }
+
+    .menu-continue-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(185, 28, 28, 0.4);
+    }
+
+    .menu-continue-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    [data-theme="light-purple"] .menu-continue-btn {
+      background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 100%);
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3);
+    }
+
+    /* User welcome message in config */
+    .user-welcome {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 15px;
+      background: var(--color-secondary);
+      border-radius: 12px;
+      border: 1px solid var(--color-border);
+    }
+
+    .user-welcome span {
+      font-size: 18px;
+      color: var(--color-text);
+    }
+
+    .user-welcome strong {
+      color: var(--color-primary);
+    }
+
+    /* Mobile responsive landing - Full viewport fit */
+    @media (max-width: 768px) {
+      .landing-container {
+        padding: 10px 15px;
+        gap: 2px;
+      }
+
+      .landing-logo .gamusa-logo {
+        width: 120px;
+        height: 60px;
+      }
+
+      .landing-title {
+        font-size: clamp(42px, 12vw, 60px);
+      }
+
+      .landing-tagline {
+        font-size: clamp(14px, 4vw, 18px);
+      }
+
+      .landing-description {
+        font-size: 13px;
+        margin-bottom: 15px;
+        padding: 0 10px;
+      }
+
+      .landing-features {
+        gap: 12px;
+        margin-top: 15px;
+      }
+
+      .feature-item {
+        padding: 10px 14px;
+        min-width: 85px;
+      }
+
+      .feature-icon {
+        font-size: 24px;
+      }
+
+      .feature-text {
+        font-size: 9px;
+      }
+
+      .start-btn {
+        padding: 12px 28px;
+        font-size: 14px;
+      }
+    }
+
+    /* Very small screens */
+    @media (max-width: 380px) {
+      .landing-title {
+        font-size: 36px;
+      }
+
+      .landing-tagline {
+        font-size: 13px;
+      }
+
+      .landing-features {
+        gap: 8px;
+      }
+
+      .feature-item {
+        padding: 8px 10px;
+        min-width: 70px;
+      }
+
+      .feature-icon {
+        font-size: 20px;
+      }
+
+      .feature-text {
+        font-size: 8px;
+      }
+    }
+
+    /* Landscape mode on mobile */
+    @media (max-height: 500px) and (orientation: landscape) {
+      .landing-container {
+        padding: 5px 20px;
+      }
+
+      .landing-logo .gamusa-logo {
+        width: 80px;
+        height: 40px;
+      }
+
+      .landing-title {
+        font-size: 32px;
+        margin: 2px 0;
+      }
+
+      .landing-tagline {
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .landing-description {
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+
+      .start-btn {
+        padding: 10px 24px;
+        font-size: 13px;
+      }
+
+      .landing-features {
+        margin-top: 10px;
+        gap: 15px;
+      }
+
+      .feature-item {
+        padding: 6px 12px;
+      }
+
+      .feature-icon {
+        font-size: 18px;
+      }
+
+      .feature-text {
+        font-size: 8px;
+      }
+    }
+
+    /* Tablet optimizations */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      .landing-container {
+        padding: 20px;
+      }
+
+      .landing-logo .gamusa-logo {
+        width: 160px;
+        height: 80px;
+      }
     }
 
     /* Premium Burger Menu Button */
@@ -497,20 +1009,10 @@
       align-items: center;
       cursor: pointer;
       gap: 6px;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease, visibility 0.3s ease;
-      box-shadow: 0 8px 24px rgba(185, 28, 28, 0.4), 0 0 12px rgba(185, 28, 28, 0.3);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease, opacity 0.2s ease, visibility 0.2s ease;
+      box-shadow: 0 4px 12px rgba(185, 28, 28, 0.3);
       opacity: 1;
       visibility: visible;
-      animation: twinkleGlow 4s ease-in-out infinite;
-    }
-
-    @keyframes twinkleGlow {
-      0%, 100% {
-        box-shadow: 0 8px 24px rgba(185, 28, 28, 0.25), 0 0 12px rgba(185, 28, 28, 0.15);
-      }
-      50% {
-        box-shadow: 0 8px 32px rgba(185, 28, 28, 0.5), 0 0 20px rgba(185, 28, 28, 0.35);
-      }
     }
 
     /* Burger menu hidden state */
@@ -523,7 +1025,7 @@
     }
 
     .burger-menu-btn:hover {
-      box-shadow: 0 12px 32px rgba(185, 28, 28, 0.6), 0 0 24px rgba(185, 28, 28, 0.4);
+      box-shadow: 0 6px 18px rgba(185, 28, 28, 0.4);
       transform: translateY(-2px);
       background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     }
@@ -533,8 +1035,7 @@
       height: 2.5px;
       background: #ffffff;
       border-radius: 2px;
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
     .burger-menu-btn.active span:nth-child(1) {
@@ -563,7 +1064,7 @@
       z-index: 8000;
       opacity: 0;
       visibility: hidden;
-      transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: opacity 0.2s ease, visibility 0.2s ease;
     }
 
     .burger-menu-overlay.active {
@@ -582,8 +1083,8 @@
       z-index: 9000;
       overflow-y: auto;
       overflow-x: hidden;
-      transition: left 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-      box-shadow: 12px 0 48px rgba(0, 0, 0, 0.6), inset -1px 0 0 rgba(196, 30, 58, 0.2);
+      transition: left 0.25s ease;
+      box-shadow: 8px 0 24px rgba(0, 0, 0, 0.5);
       padding-top: 90px;
       padding-bottom: 40px;
     }
@@ -768,7 +1269,9 @@
     }
 
     @keyframes spin {
-      to { transform: rotate(360deg); }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     .mode-toggle-container {
@@ -1185,6 +1688,62 @@
       box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
     }
 
+    .section-toggle-container {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .section-toggle-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 10px;
+    }
+
+    .section-toggle-buttons {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .section-toggle-btn {
+      flex: 1;
+      min-width: 70px;
+      padding: 8px 6px;
+      font-size: 11px;
+      font-weight: 600;
+      border: 1px solid var(--color-border);
+      background: var(--color-background);
+      color: var(--color-text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .section-toggle-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    .section-toggle-btn.active {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+
+    .section-counts {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--color-text-secondary);
+    }
+
     .palette-header {
       font-size: 16px;
       font-weight: 700;
@@ -1314,12 +1873,12 @@
     .stat-toggle:hover {
       background: var(--color-secondary);
       transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     }
 
     .stat-toggle.active {
       background: var(--color-primary);
-      box-shadow: 0 0 20px rgba(185, 28, 28, 0.5), inset 0 0 15px rgba(255,255,255,0.1);
+      box-shadow: 0 0 20px rgba(185, 28, 28, 0.5), inset 0 0 15px rgba(255, 255, 255, 0.1);
     }
 
     .stat-toggle.active .stat-value,
@@ -1693,30 +2252,144 @@
 
 <body>
 
-  <!-- Burger Menu Button -->
-  <button id="burger-menu-btn" class="burger-menu-btn">
+  <!-- Landing Page -->
+  <div id="landing-screen" class="screen active">
+    <div class="landing-container">
+      <!-- Gamusa Logo for Landing -->
+      <div class="gamusa-logo-container landing-logo">
+        <svg class="gamusa-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="gamusaGlowLanding" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
+              <feMerge>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+            <pattern id="flowerPatternLanding" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+              <circle cx="6" cy="6" r="1.8" fill="#c41e3a" />
+              <circle cx="6" cy="3.5" r="0.7" fill="#c41e3a" />
+              <circle cx="6" cy="8.5" r="0.7" fill="#c41e3a" />
+              <circle cx="3.5" cy="6" r="0.7" fill="#c41e3a" />
+              <circle cx="8.5" cy="6" r="0.7" fill="#c41e3a" />
+              <circle cx="4" cy="4" r="0.5" fill="#c41e3a" />
+              <circle cx="8" cy="4" r="0.5" fill="#c41e3a" />
+              <circle cx="4" cy="8" r="0.5" fill="#c41e3a" />
+              <circle cx="8" cy="8" r="0.5" fill="#c41e3a" />
+            </pattern>
+          </defs>
+          <rect x="2" y="2" width="196" height="96" rx="1" fill="none" stroke="#c41e3a" stroke-width="1.5"
+            filter="url(#gamusaGlowLanding)" />
+          <rect x="5" y="5" width="190" height="90" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.8" />
+          <rect x="7" y="7" width="186" height="86" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.5" />
+          <rect x="9" y="9" width="182" height="82" fill="#ffffff" />
+          <rect x="9" y="9" width="182" height="5" fill="#c41e3a" />
+          <rect x="9" y="9" width="182" height="1.5" fill="#a01830" />
+          <rect x="9" y="86" width="182" height="5" fill="#c41e3a" />
+          <rect x="9" y="89" width="182" height="1.5" fill="#a01830" />
+          <rect x="9" y="14" width="12" height="72" fill="#fff8f8" />
+          <g fill="#c41e3a">
+            <rect x="9" y="14" width="1.2" height="72" />
+            <rect x="11.5" y="14" width="0.6" height="72" />
+            <polygon points="16,20 19,24 16,28 13,24" />
+            <polygon points="16,33 19,37 16,41 13,37" />
+            <polygon points="16,46 19,50 16,54 13,50" />
+            <polygon points="16,59 19,63 16,67 13,63" />
+            <polygon points="16,72 19,76 16,80 13,76" />
+            <circle cx="16" cy="30" r="1" />
+            <circle cx="16" cy="43" r="1" />
+            <circle cx="16" cy="56" r="1" />
+            <circle cx="16" cy="69" r="1" />
+          </g>
+          <rect x="179" y="14" width="12" height="72" fill="#fff8f8" />
+          <g fill="#c41e3a">
+            <rect x="189.8" y="14" width="1.2" height="72" />
+            <rect x="187.9" y="14" width="0.6" height="72" />
+            <polygon points="184,20 187,24 184,28 181,24" />
+            <polygon points="184,33 187,37 184,41 181,37" />
+            <polygon points="184,46 187,50 184,54 181,50" />
+            <polygon points="184,59 187,63 184,67 181,63" />
+            <polygon points="184,72 187,76 184,80 181,76" />
+            <circle cx="184" cy="30" r="1" />
+            <circle cx="184" cy="43" r="1" />
+            <circle cx="184" cy="56" r="1" />
+            <circle cx="184" cy="69" r="1" />
+          </g>
+          <rect x="21" y="14" width="158" height="72" fill="url(#flowerPatternLanding)" opacity="0.95" />
+        </svg>
+      </div>
+
+      <h1 class="landing-title gamusa-heading">Assami</h1>
+      <div class="heading-accent"></div>
+      <p class="landing-tagline">An Unlimited Mock Test Platform</p>
+      <p class="landing-description">Prepare for IBPS, TCS-ION and more with AI-powered practice tests</p>
+
+      <button class="start-btn" onclick="showBurgerMenu()">
+        <span>Start Your Journey</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <div class="landing-features">
+        <div class="feature-item">
+          <span class="feature-icon feature-number" id="stat-questions">...</span>
+          <span class="feature-text">Questions</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon feature-number" id="stat-branches">...</span>
+          <span class="feature-text">Branches</span>
+        </div>
+        <div class="feature-item">
+          <span class="feature-icon feature-number" id="stat-exams">...</span>
+          <span class="feature-text">Exam Types</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Burger Menu Button (Hidden initially) -->
+  <button id="burger-menu-btn" class="burger-menu-btn hidden">
     <span></span>
     <span></span>
     <span></span>
   </button>
 
   <!-- Burger Menu Overlay -->
-  <div id="burger-menu-overlay" class="burger-menu-overlay"></div>
+  <div id="burger-menu-overlay" class="burger-menu-overlay hidden"></div>
 
   <!-- Burger Menu Panel -->
-  <div id="burger-menu-panel" class="burger-menu-panel">
+  <div id="burger-menu-panel" class="burger-menu-panel hidden">
+    <div class="menu-header">
+      <h2>Configure Your Test</h2>
+      <button class="menu-close-btn" onclick="closeBurgerMenu()">&times;</button>
+    </div>
+
+    <div class="menu-section">
+      <div class="menu-section-title">👤 Your Name</div>
+      <input type="text" id="user-name-input" class="menu-input" placeholder="Enter your name...">
+    </div>
+
     <div class="menu-section">
       <div class="menu-section-title">📍 Select Branch</div>
       <div id="branches-container" class="capsule-container">
         <div class="loading-spinner-small"></div>
       </div>
     </div>
+
     <div class="menu-section">
-      <div class="menu-section-title">📚 Select Exam</div>
+      <div class="menu-section-title">📚 Select Exam Type</div>
       <div id="exams-container" class="capsule-container">
         <div class="loading-spinner-small"></div>
       </div>
     </div>
+
+    <button class="menu-continue-btn" onclick="proceedToConfig()">
+      Continue to Configuration
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M5 12h14M12 5l7 7-7 7" />
+      </svg>
+    </button>
   </div>
 
   <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">
@@ -1737,111 +2410,89 @@
     </div>
   </div>
 
-  <div id="config-screen" class="screen active">
+  <div id="config-screen" class="screen">
     <div class="config-container">
       <!-- Assamese Gamusa Logo -->
       <div class="gamusa-logo-container">
         <svg class="gamusa-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <filter id="gamusaGlow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+              <feGaussianBlur stdDeviation="1.5" result="coloredBlur" />
               <feMerge>
-                <feMergeNode in="coloredBlur"/>
-                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode in="coloredBlur" />
+                <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            <pattern id="flowerPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-              <circle cx="10" cy="10" r="2.5" fill="#c41e3a"/>
-              <circle cx="10" cy="6" r="1" fill="#c41e3a"/>
-              <circle cx="10" cy="14" r="1" fill="#c41e3a"/>
-              <circle cx="6" cy="10" r="1" fill="#c41e3a"/>
-              <circle cx="14" cy="10" r="1" fill="#c41e3a"/>
-              <circle cx="7" cy="7" r="0.8" fill="#c41e3a"/>
-              <circle cx="13" cy="7" r="0.8" fill="#c41e3a"/>
-              <circle cx="7" cy="13" r="0.8" fill="#c41e3a"/>
-              <circle cx="13" cy="13" r="0.8" fill="#c41e3a"/>
+            <pattern id="flowerPattern" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+              <circle cx="6" cy="6" r="1.8" fill="#c41e3a" />
+              <circle cx="6" cy="3.5" r="0.7" fill="#c41e3a" />
+              <circle cx="6" cy="8.5" r="0.7" fill="#c41e3a" />
+              <circle cx="3.5" cy="6" r="0.7" fill="#c41e3a" />
+              <circle cx="8.5" cy="6" r="0.7" fill="#c41e3a" />
+              <circle cx="4" cy="4" r="0.5" fill="#c41e3a" />
+              <circle cx="8" cy="4" r="0.5" fill="#c41e3a" />
+              <circle cx="4" cy="8" r="0.5" fill="#c41e3a" />
+              <circle cx="8" cy="8" r="0.5" fill="#c41e3a" />
             </pattern>
           </defs>
-          
-          <!-- Outer Red Border -->
-          <rect x="2" y="2" width="196" height="96" rx="2" fill="none" stroke="#c41e3a" stroke-width="3" filter="url(#gamusaGlow)"/>
-          
-          <!-- Second Red Line -->
-          <rect x="6" y="6" width="188" height="88" rx="1" fill="none" stroke="#c41e3a" stroke-width="1.5"/>
-          
-          <!-- Third Red Line -->
-          <rect x="9" y="9" width="182" height="82" rx="1" fill="none" stroke="#c41e3a" stroke-width="1"/>
-          
+
+          <!-- Outer Red Border - Thinner -->
+          <rect x="2" y="2" width="196" height="96" rx="1" fill="none" stroke="#c41e3a" stroke-width="1.5"
+            filter="url(#gamusaGlow)" />
+
+          <!-- Second Red Line - Thinner -->
+          <rect x="5" y="5" width="190" height="90" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.8" />
+
+          <!-- Third Red Line - Thinner -->
+          <rect x="7" y="7" width="186" height="86" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.5" />
+
           <!-- White Inner Background -->
-          <rect x="12" y="12" width="176" height="76" fill="#ffffff"/>
-          
-          <!-- Top Red Border Band -->
-          <rect x="12" y="12" width="176" height="8" fill="#c41e3a"/>
-          <rect x="12" y="12" width="176" height="2" fill="#a01830"/>
-          <rect x="12" y="18" width="176" height="1" fill="#a01830"/>
-          
-          <!-- Bottom Red Border Band -->
-          <rect x="12" y="80" width="176" height="8" fill="#c41e3a"/>
-          <rect x="12" y="86" width="176" height="2" fill="#a01830"/>
-          <rect x="12" y="80" width="176" height="1" fill="#a01830"/>
-          
-          <!-- Left Decorative Border -->
-          <rect x="12" y="20" width="18" height="60" fill="#fff5f5"/>
+          <rect x="9" y="9" width="182" height="82" fill="#ffffff" />
+
+          <!-- Top Red Border Band - Thinner -->
+          <rect x="9" y="9" width="182" height="5" fill="#c41e3a" />
+          <rect x="9" y="9" width="182" height="1.5" fill="#a01830" />
+
+          <!-- Bottom Red Border Band - Thinner -->
+          <rect x="9" y="86" width="182" height="5" fill="#c41e3a" />
+          <rect x="9" y="89" width="182" height="1.5" fill="#a01830" />
+
+          <!-- Left Decorative Border - Thinner -->
+          <rect x="9" y="14" width="12" height="72" fill="#fff8f8" />
           <g fill="#c41e3a">
-            <rect x="12" y="20" width="2" height="60"/>
-            <rect x="16" y="20" width="1" height="60"/>
+            <rect x="9" y="14" width="1.2" height="72" />
+            <rect x="11.5" y="14" width="0.6" height="72" />
             <!-- Diamond Pattern Left -->
-            <polygon points="22,25 26,30 22,35 18,30"/>
-            <polygon points="22,40 26,45 22,50 18,45"/>
-            <polygon points="22,55 26,60 22,65 18,60"/>
-            <polygon points="22,70 26,75 22,80 18,75"/>
-            <circle cx="22" cy="32.5" r="1.5"/>
-            <circle cx="22" cy="47.5" r="1.5"/>
-            <circle cx="22" cy="62.5" r="1.5"/>
+            <polygon points="16,20 19,24 16,28 13,24" />
+            <polygon points="16,33 19,37 16,41 13,37" />
+            <polygon points="16,46 19,50 16,54 13,50" />
+            <polygon points="16,59 19,63 16,67 13,63" />
+            <polygon points="16,72 19,76 16,80 13,76" />
+            <circle cx="16" cy="30" r="1" />
+            <circle cx="16" cy="43" r="1" />
+            <circle cx="16" cy="56" r="1" />
+            <circle cx="16" cy="69" r="1" />
           </g>
-          
-          <!-- Right Decorative Border -->
-          <rect x="170" y="20" width="18" height="60" fill="#fff5f5"/>
+
+          <!-- Right Decorative Border - Thinner -->
+          <rect x="179" y="14" width="12" height="72" fill="#fff8f8" />
           <g fill="#c41e3a">
-            <rect x="186" y="20" width="2" height="60"/>
-            <rect x="183" y="20" width="1" height="60"/>
+            <rect x="189.8" y="14" width="1.2" height="72" />
+            <rect x="187.9" y="14" width="0.6" height="72" />
             <!-- Diamond Pattern Right -->
-            <polygon points="178,25 182,30 178,35 174,30"/>
-            <polygon points="178,40 182,45 178,50 174,45"/>
-            <polygon points="178,55 182,60 178,65 174,60"/>
-            <polygon points="178,70 182,75 178,80 174,75"/>
-            <circle cx="178" cy="32.5" r="1.5"/>
-            <circle cx="178" cy="47.5" r="1.5"/>
-            <circle cx="178" cy="62.5" r="1.5"/>
+            <polygon points="184,20 187,24 184,28 181,24" />
+            <polygon points="184,33 187,37 184,41 181,37" />
+            <polygon points="184,46 187,50 184,54 181,50" />
+            <polygon points="184,59 187,63 184,67 181,63" />
+            <polygon points="184,72 187,76 184,80 181,76" />
+            <circle cx="184" cy="30" r="1" />
+            <circle cx="184" cy="43" r="1" />
+            <circle cx="184" cy="56" r="1" />
+            <circle cx="184" cy="69" r="1" />
           </g>
-          
-          <!-- Center White Area with Flower Pattern -->
-          <rect x="30" y="20" width="140" height="60" fill="url(#flowerPattern)" opacity="0.9"/>
-          
-          <!-- Additional scattered flowers for authenticity -->
-          <g fill="#c41e3a" opacity="0.85">
-            <!-- Row 1 -->
-            <circle cx="45" cy="30" r="2"/><circle cx="45" cy="27" r="0.8"/><circle cx="45" cy="33" r="0.8"/><circle cx="42" cy="30" r="0.8"/><circle cx="48" cy="30" r="0.8"/>
-            <circle cx="75" cy="30" r="2"/><circle cx="75" cy="27" r="0.8"/><circle cx="75" cy="33" r="0.8"/><circle cx="72" cy="30" r="0.8"/><circle cx="78" cy="30" r="0.8"/>
-            <circle cx="105" cy="30" r="2"/><circle cx="105" cy="27" r="0.8"/><circle cx="105" cy="33" r="0.8"/><circle cx="102" cy="30" r="0.8"/><circle cx="108" cy="30" r="0.8"/>
-            <circle cx="135" cy="30" r="2"/><circle cx="135" cy="27" r="0.8"/><circle cx="135" cy="33" r="0.8"/><circle cx="132" cy="30" r="0.8"/><circle cx="138" cy="30" r="0.8"/>
-            <circle cx="155" cy="30" r="2"/><circle cx="155" cy="27" r="0.8"/><circle cx="155" cy="33" r="0.8"/><circle cx="152" cy="30" r="0.8"/><circle cx="158" cy="30" r="0.8"/>
-            <!-- Row 2 -->
-            <circle cx="55" cy="45" r="2"/><circle cx="55" cy="42" r="0.8"/><circle cx="55" cy="48" r="0.8"/><circle cx="52" cy="45" r="0.8"/><circle cx="58" cy="45" r="0.8"/>
-            <circle cx="85" cy="45" r="2"/><circle cx="85" cy="42" r="0.8"/><circle cx="85" cy="48" r="0.8"/><circle cx="82" cy="45" r="0.8"/><circle cx="88" cy="45" r="0.8"/>
-            <circle cx="115" cy="45" r="2"/><circle cx="115" cy="42" r="0.8"/><circle cx="115" cy="48" r="0.8"/><circle cx="112" cy="45" r="0.8"/><circle cx="118" cy="45" r="0.8"/>
-            <circle cx="145" cy="45" r="2"/><circle cx="145" cy="42" r="0.8"/><circle cx="145" cy="48" r="0.8"/><circle cx="142" cy="45" r="0.8"/><circle cx="148" cy="45" r="0.8"/>
-            <!-- Row 3 -->
-            <circle cx="65" cy="60" r="2"/><circle cx="65" cy="57" r="0.8"/><circle cx="65" cy="63" r="0.8"/><circle cx="62" cy="60" r="0.8"/><circle cx="68" cy="60" r="0.8"/>
-            <circle cx="95" cy="60" r="2"/><circle cx="95" cy="57" r="0.8"/><circle cx="95" cy="63" r="0.8"/><circle cx="92" cy="60" r="0.8"/><circle cx="98" cy="60" r="0.8"/>
-            <circle cx="125" cy="60" r="2"/><circle cx="125" cy="57" r="0.8"/><circle cx="125" cy="63" r="0.8"/><circle cx="122" cy="60" r="0.8"/><circle cx="128" cy="60" r="0.8"/>
-            <circle cx="155" cy="60" r="2"/><circle cx="155" cy="57" r="0.8"/><circle cx="155" cy="63" r="0.8"/><circle cx="152" cy="60" r="0.8"/><circle cx="158" cy="60" r="0.8"/>
-            <!-- Row 4 -->
-            <circle cx="45" cy="72" r="2"/><circle cx="45" cy="69" r="0.8"/><circle cx="45" cy="75" r="0.8"/><circle cx="42" cy="72" r="0.8"/><circle cx="48" cy="72" r="0.8"/>
-            <circle cx="75" cy="72" r="2"/><circle cx="75" cy="69" r="0.8"/><circle cx="75" cy="75" r="0.8"/><circle cx="72" cy="72" r="0.8"/><circle cx="78" cy="72" r="0.8"/>
-            <circle cx="105" cy="72" r="2"/><circle cx="105" cy="69" r="0.8"/><circle cx="105" cy="75" r="0.8"/><circle cx="102" cy="72" r="0.8"/><circle cx="108" cy="72" r="0.8"/>
-            <circle cx="135" cy="72" r="2"/><circle cx="135" cy="69" r="0.8"/><circle cx="135" cy="75" r="0.8"/><circle cx="132" cy="72" r="0.8"/><circle cx="138" cy="72" r="0.8"/>
-          </g>
+
+          <!-- Center White Area with Dense Flower Pattern -->
+          <rect x="21" y="14" width="158" height="72" fill="url(#flowerPattern)" opacity="0.95" />
         </svg>
       </div>
       <h1 class="gamusa-heading">Assami</h1>
@@ -2236,6 +2887,18 @@
         </div>
       </div>
       <div class="palette-container">
+        <div id="section-toggle-container" class="section-toggle-container" style="display: none;">
+          <div class="section-toggle-header">Section Navigation</div>
+          <div class="section-toggle-buttons">
+            <button class="section-toggle-btn active" id="btn-all-sections" onclick="filterBySection('all')">All</button>
+            <button class="section-toggle-btn" id="btn-non-tech" onclick="filterBySection('Non-Technical')">Non-Technical</button>
+            <button class="section-toggle-btn" id="btn-tech" onclick="filterBySection('Technical')">Technical</button>
+          </div>
+          <div class="section-counts">
+            <span id="non-tech-count">Non-Tech: 0</span>
+            <span id="tech-count">Tech: 0</span>
+          </div>
+        </div>
         <div class="palette-header">Question Palette</div>
         <div class="palette-grid" id="palette-grid"></div>
         <div class="palette-legend">
@@ -2259,24 +2922,151 @@
   <div id="results-screen" class="screen">
     <div class="results-container">
       <div class="results-header">
-        <h1>Test Results</h1>
+        <div class="results-brand">
+          <div class="results-logo">
+            <svg class="gamusa-logo results-gamusa-logo" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="gamusaGlowResults" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="1" result="coloredBlur" />
+                  <feMerge>
+                    <feMergeNode in="coloredBlur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <pattern id="flowerPatternResults" x="0" y="0" width="12" height="12" patternUnits="userSpaceOnUse">
+                  <circle cx="6" cy="6" r="1.8" fill="#c41e3a" />
+                  <circle cx="6" cy="3.5" r="0.7" fill="#c41e3a" />
+                  <circle cx="6" cy="8.5" r="0.7" fill="#c41e3a" />
+                  <circle cx="3.5" cy="6" r="0.7" fill="#c41e3a" />
+                  <circle cx="8.5" cy="6" r="0.7" fill="#c41e3a" />
+                  <circle cx="4" cy="4" r="0.5" fill="#c41e3a" />
+                  <circle cx="8" cy="4" r="0.5" fill="#c41e3a" />
+                  <circle cx="4" cy="8" r="0.5" fill="#c41e3a" />
+                  <circle cx="8" cy="8" r="0.5" fill="#c41e3a" />
+                </pattern>
+              </defs>
+              <rect x="2" y="2" width="196" height="96" rx="1" fill="none" stroke="#c41e3a" stroke-width="1.5"
+                filter="url(#gamusaGlowResults)" />
+              <rect x="5" y="5" width="190" height="90" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.8" />
+              <rect x="7" y="7" width="186" height="86" rx="1" fill="none" stroke="#c41e3a" stroke-width="0.5" />
+              <rect x="9" y="9" width="182" height="82" fill="#ffffff" />
+              <rect x="9" y="9" width="182" height="5" fill="#c41e3a" />
+              <rect x="9" y="9" width="182" height="1.5" fill="#a01830" />
+              <rect x="9" y="86" width="182" height="5" fill="#c41e3a" />
+              <rect x="9" y="89" width="182" height="1.5" fill="#a01830" />
+              <rect x="9" y="14" width="12" height="72" fill="#fff8f8" />
+              <g fill="#c41e3a">
+                <rect x="9" y="14" width="1.2" height="72" />
+                <rect x="11.5" y="14" width="0.6" height="72" />
+                <polygon points="16,20 19,24 16,28 13,24" />
+                <polygon points="16,33 19,37 16,41 13,37" />
+                <polygon points="16,46 19,50 16,54 13,50" />
+                <polygon points="16,59 19,63 16,67 13,63" />
+                <polygon points="16,72 19,76 16,80 13,76" />
+                <circle cx="16" cy="30" r="1" />
+                <circle cx="16" cy="43" r="1" />
+                <circle cx="16" cy="56" r="1" />
+                <circle cx="16" cy="69" r="1" />
+              </g>
+              <rect x="179" y="14" width="12" height="72" fill="#fff8f8" />
+              <g fill="#c41e3a">
+                <rect x="189.8" y="14" width="1.2" height="72" />
+                <rect x="187.9" y="14" width="0.6" height="72" />
+                <polygon points="184,20 187,24 184,28 181,24" />
+                <polygon points="184,33 187,37 184,41 181,37" />
+                <polygon points="184,46 187,50 184,54 181,50" />
+                <polygon points="184,59 187,63 184,67 181,63" />
+                <polygon points="184,72 187,76 184,80 181,76" />
+                <circle cx="184" cy="30" r="1" />
+                <circle cx="184" cy="43" r="1" />
+                <circle cx="184" cy="56" r="1" />
+                <circle cx="184" cy="69" r="1" />
+              </g>
+              <rect x="21" y="14" width="158" height="72" fill="url(#flowerPatternResults)" opacity="0.95" />
+            </svg>
+          </div>
+          <h1 class="results-brand-name">Assami</h1>
+          <p class="results-brand-tagline">Mock Test Results</p>
+        </div>
         <div class="score-display" id="score-display">0/60</div>
         <p id="percentage-display">0.00%</p>
       </div>
+      <style>
+        .results-brand {
+          margin-bottom: 15px;
+          text-align: center;
+        }
+
+        .results-logo {
+          display: flex;
+          justify-content: center;
+          margin-bottom: 10px;
+        }
+
+        .results-gamusa-logo {
+          width: 120px;
+          height: 60px;
+          filter: drop-shadow(0 0 4px rgba(196, 30, 58, 0.3));
+        }
+
+        [data-theme="light-purple"] .results-gamusa-logo {
+          filter: drop-shadow(0 0 4px rgba(124, 58, 237, 0.2));
+        }
+
+        .results-brand-name {
+          font-size: clamp(36px, 6vw, 52px);
+          font-family: var(--font-family-display);
+          font-weight: 900;
+          background: linear-gradient(135deg, #b91c1c 0%, #dc2626 50%, #ef4444 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin: 0;
+          text-shadow: none;
+          filter: drop-shadow(0 4px 12px rgba(185, 28, 28, 0.3));
+          letter-spacing: -1px;
+        }
+
+        .results-brand-tagline {
+          font-size: clamp(14px, 2vw, 18px);
+          font-family: var(--font-family-display);
+          font-weight: 600;
+          color: var(--color-primary);
+          margin: 5px 0 0 0;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+        }
+
+        [data-theme="light-purple"] .results-brand-name {
+          background: linear-gradient(135deg, #7c3aed 0%, #8b5cf6 50%, #a78bfa 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 4px 12px rgba(124, 58, 237, 0.3));
+        }
+
+        [data-theme="light-purple"] .results-brand-tagline {
+          color: #7c3aed;
+        }
+      </style>
       <div class="stats-grid">
-        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-success);" data-filter="correct" onclick="toggleResultsFilter('correct')">
+        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-success);" data-filter="correct"
+          onclick="toggleResultsFilter('correct')">
           <div class="stat-value" id="correct-count">0</div>
           <div class="stat-label">Correct Answers</div>
         </div>
-        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-error);" data-filter="incorrect" onclick="toggleResultsFilter('incorrect')">
+        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-error);" data-filter="incorrect"
+          onclick="toggleResultsFilter('incorrect')">
           <div class="stat-value" id="incorrect-count">0</div>
           <div class="stat-label">Incorrect Answers</div>
         </div>
-        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-warning);" data-filter="unanswered" onclick="toggleResultsFilter('unanswered')">
+        <div class="stat-card stat-toggle" style="border-left: 4px solid var(--color-warning);" data-filter="unanswered"
+          onclick="toggleResultsFilter('unanswered')">
           <div class="stat-value" id="unanswered-count">0</div>
           <div class="stat-label">Unanswered</div>
         </div>
-        <div class="stat-card stat-toggle" style="border-left: 4px solid #a78bfa;" data-filter="marked" onclick="toggleResultsFilter('marked')">
+        <div class="stat-card stat-toggle" style="border-left: 4px solid #a78bfa;" data-filter="marked"
+          onclick="toggleResultsFilter('marked')">
           <div class="stat-value" id="marked-count">0</div>
           <div class="stat-label">Marked for Review</div>
         </div>
@@ -2310,7 +3100,9 @@
       selectedExam: null,
       branches: [],
       exams: [],
-      resultsFilter: new Set()
+      resultsFilter: new Set(),
+      sectionFilter: 'all',
+      filteredQuestionIndices: []
     };
 
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjJ_eWAoVK2SXvTMvN0BM4SHo60i-0WE6UKmu4rTao2sLynOMvoQ427mHd2u9YWGeNjOYncb2S3YAf/pub?output=csv';
@@ -2357,15 +3149,18 @@
       const panel = document.getElementById('burger-menu-panel');
 
       btn.addEventListener('click', () => {
+        const isActive = panel.classList.contains('active');
+        if (isActive) {
+          closeBurgerMenu();
+        } else {
+          showBurgerMenu();
+        }
         btn.classList.toggle('active');
-        overlay.classList.toggle('active');
-        panel.classList.toggle('active');
       });
 
       overlay.addEventListener('click', () => {
         btn.classList.remove('active');
-        overlay.classList.remove('active');
-        panel.classList.remove('active');
+        closeBurgerMenu();
       });
     }
 
@@ -2373,13 +3168,13 @@
       // Extract unique branches and exams from the loaded CSV data
       const allBranches = appState.allQuestions.map(q => q.branch).filter(Boolean).map(b => b.trim());
       const allExams = appState.allQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim());
-      
+
       appState.branches = [...new Set(allBranches)].sort();
       appState.exams = [...new Set(allExams)].sort();
-      
+
       console.log('Extracted Branches:', appState.branches);
       console.log('Extracted Exams:', appState.exams);
-      
+
       populateBranchesAndExams();
     }
 
@@ -2401,12 +3196,12 @@
       el.classList.add('selected');
       appState.selectedBranch = branch;
       localStorage.setItem('selectedBranch', branch);
-      
+
       // Clear selected exam when branch changes
       appState.selectedExam = null;
       localStorage.removeItem('selectedExam');
       document.querySelectorAll('#exams-container .capsule').forEach(c => c.classList.remove('selected'));
-      
+
       // Update available exams for this branch
       updateExamsForBranch(branch);
       filterQuestionsByBranchAndExam();
@@ -2415,14 +3210,14 @@
     function updateExamsForBranch(branch) {
       // Get all questions for the selected branch
       const branchQuestions = appState.allQuestions.filter(q => q.branch && q.branch.trim() === branch);
-      
+
       // Extract unique exams for this branch
       const availableExams = [...new Set(
         branchQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim())
       )].sort();
-      
+
       console.log('Available exams for', branch, ':', availableExams);
-      
+
       // Update the exams container
       const examContainer = document.getElementById('exams-container');
       examContainer.innerHTML = availableExams.map(exam =>
@@ -2473,10 +3268,20 @@
     }
 
     function populateSubjects() {
-      const subjects = [...new Set(appState.allQuestions.map(q => q.subject).filter(Boolean))];
+      // Filter by selected branch and exam for subject-wise mode
+      let questionsToFilter = appState.allQuestions;
+
+      if (appState.selectedBranch && appState.selectedExam) {
+        questionsToFilter = appState.allQuestions.filter(q =>
+          q.branch && q.branch.trim() === appState.selectedBranch &&
+          q.examType && q.examType.trim() === appState.selectedExam
+        );
+      }
+
+      const subjects = [...new Set(questionsToFilter.map(q => q.subject).filter(Boolean))];
       console.log('All subjects found:', subjects);
-      console.log('Total questions:', appState.allQuestions.length);
-      console.log('Sample question subjects:', appState.allQuestions.slice(0, 5).map(q => q.subject));
+      console.log('Total questions:', questionsToFilter.length);
+      console.log('Sample question subjects:', questionsToFilter.slice(0, 5).map(q => q.subject));
 
       const container = document.getElementById('subject-checkboxes');
       container.innerHTML = '';
@@ -2490,6 +3295,9 @@
         `;
         container.appendChild(div);
       });
+
+      // Store filtered questions for subject-wise mode
+      appState.filteredQuestions = questionsToFilter;
     }
 
     function onSubjectChange() {
@@ -2611,23 +3419,115 @@
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById(`${screenName}-screen`).classList.add('active');
       appState.currentScreen = screenName;
-      
+
       // Show/hide burger menu based on current screen
       const burgerBtn = document.getElementById('burger-menu-btn');
-      const burgerOverlay = document.getElementById('burger-menu-overlay');
-      const burgerPanel = document.getElementById('burger-menu-panel');
-      
+
       if (screenName === 'config') {
         burgerBtn.classList.remove('hidden');
-        burgerOverlay.classList.remove('hidden');
-        burgerPanel.classList.remove('hidden');
+      } else if (screenName === 'landing') {
+        burgerBtn.classList.add('hidden');
+        closeBurgerMenu();
       } else {
         burgerBtn.classList.add('hidden');
-        burgerOverlay.classList.add('hidden');
-        burgerPanel.classList.add('hidden');
       }
-      
+
       setTimeout(() => {window.scrollTo(0, 0); document.body.scrollTop = 0; document.documentElement.scrollTop = 0;}, 0);
+    }
+
+    // Show burger menu from landing page - make globally accessible
+    window.showBurgerMenu = function () {
+      document.getElementById('burger-menu-overlay').classList.add('active');
+      document.getElementById('burger-menu-overlay').classList.remove('hidden');
+      document.getElementById('burger-menu-panel').classList.add('active');
+      document.getElementById('burger-menu-panel').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close burger menu - make globally accessible
+    window.closeBurgerMenu = function () {
+      document.getElementById('burger-menu-overlay').classList.remove('active');
+      document.getElementById('burger-menu-panel').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Proceed to configuration page after burger menu selections - make globally accessible
+    window.proceedToConfig = function () {
+      const userName = document.getElementById('user-name-input').value.trim();
+
+      if (!appState.selectedBranch) {
+        showModal('Selection Required', 'Please select a branch to continue.', [
+          {text: 'OK', primary: true, action: hideModal}
+        ]);
+        return;
+      }
+
+      if (!appState.selectedExam) {
+        showModal('Selection Required', 'Please select an exam type to continue.', [
+          {text: 'OK', primary: true, action: hideModal}
+        ]);
+        return;
+      }
+
+      // Store user name
+      appState.userName = userName || 'Student';
+      localStorage.setItem('userName', appState.userName);
+
+      // Update exam name with user's name
+      const examNameInput = document.getElementById('exam-name');
+      if (examNameInput && userName) {
+        examNameInput.value = `${userName}'s Mock Test`;
+      }
+
+      // Add user welcome message
+      const configContainer = document.querySelector('.config-container');
+      let welcomeEl = document.getElementById('user-welcome-msg');
+      if (!welcomeEl) {
+        welcomeEl = document.createElement('div');
+        welcomeEl.id = 'user-welcome-msg';
+        welcomeEl.className = 'user-welcome';
+        const subtitleEl = configContainer.querySelector('.config-subtitle');
+        if (subtitleEl) {
+          subtitleEl.after(welcomeEl);
+        }
+      }
+      welcomeEl.innerHTML = `<span>Welcome, <strong>${appState.userName}</strong>! You selected <strong>${appState.selectedBranch}</strong> - <strong>${appState.selectedExam}</strong></span>`;
+
+      // Close burger menu and switch to config screen
+      closeBurgerMenu();
+      switchScreen('config');
+
+      // Populate subjects based on selected branch for subject-wise mode
+      populateSubjectsForBranch();
+    }
+
+    // Populate subjects filtered by selected branch
+    function populateSubjectsForBranch() {
+      if (!appState.selectedBranch) return;
+
+      // Filter questions by selected branch and exam
+      const branchQuestions = appState.allQuestions.filter(q =>
+        q.branch && q.branch.trim() === appState.selectedBranch &&
+        q.examType && q.examType.trim() === appState.selectedExam
+      );
+
+      const subjects = [...new Set(branchQuestions.map(q => q.subject).filter(Boolean))];
+
+      const container = document.getElementById('subject-checkboxes');
+      container.innerHTML = '';
+
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="onSubjectChange()">
+          <label for="subj-${idx}">${subj}</label>
+        `;
+        container.appendChild(div);
+      });
+
+      // Store filtered questions for subject-wise mode
+      appState.filteredQuestions = branchQuestions;
     }
 
     function showLoadingOverlay(text) {
@@ -2665,8 +3565,8 @@
         console.log('First row data:', parsed.data[0]);
       }
 
-      return parsed.data.map((row, index) => ({
-        id: index + 1,
+      const allQuestions = parsed.data.map((row, index) => ({
+        id: findColumn(row, ['Id', 'ID', 'id']) || String(index + 1),
         question: findColumn(row, ['Question']) || '',
         options: [
           findColumn(row, ['OptionA', 'Option A']) || '',
@@ -2682,12 +3582,24 @@
         explanation: findColumn(row, ['Explanation']) || 'No explanation available.',
         questionType: findColumn(row, ['QuestionType', 'Question Type']) || 'Theoretical',
         branch: findColumn(row, ['Branch']) || 'General',
-        examType: findColumn(row, ['Exam Type', 'ExamType']) || 'General'
+        examType: findColumn(row, ['Exam Type', 'ExamType']) || 'General',
+        status: (findColumn(row, ['Status', 'status']) || 'Yes').trim().toLowerCase()
       }));
+      
+      // Filter questions by Status - only include questions where Status is "Yes"
+      return allQuestions.filter(q => q.status === 'yes');
     }
 
     function prepareExamQuestions(filtered) {
-      let shuffled = shuffleArray(filtered);
+      // Remove duplicate questions based on ID
+      const seenIds = new Set();
+      const uniqueFiltered = filtered.filter(q => {
+        if (seenIds.has(q.id)) return false;
+        seenIds.add(q.id);
+        return true;
+      });
+      
+      let shuffled = shuffleArray(uniqueFiltered);
       return shuffled.map(q => {
         const optionsWithIndex = q.options.map((opt, idx) => ({option: opt, originalIndex: idx}));
         const shuffledOpts = shuffleArray(optionsWithIndex);
@@ -2836,6 +3748,7 @@
         appState.examQuestions = prepareExamQuestions(filtered);
         appState.userAnswers = appState.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
         appState.currentQuestionIndex = 0;
+        appState.sectionFilter = 'all';
         appState.config = {
           duration,
           techCount: techQ,
@@ -2844,6 +3757,18 @@
 
         hideLoadingOverlay();
         switchScreen('exam');
+        
+        // Show section toggle only in Full Test mode
+        const sectionToggle = document.getElementById('section-toggle-container');
+        if (appState.examMode === 'full') {
+          sectionToggle.style.display = 'block';
+          // Reset section filter buttons
+          document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+          document.getElementById('btn-all-sections').classList.add('active');
+        } else {
+          sectionToggle.style.display = 'none';
+        }
+        
         startTimer(duration);
         renderPalette();
         renderQuestion(0);
@@ -2862,7 +3787,7 @@
       appState.currentQuestionIndex = index;
 
       document.getElementById('question-number').textContent = `Question ${index + 1} of ${appState.examQuestions.length}`;
-      document.getElementById('current-section').textContent = q.subject || 'General';
+      document.getElementById('current-section').textContent = `ID: ${q.id} | ${q.subject || 'General'}`;
       document.getElementById('question-text').innerHTML = q.question;
 
       const container = document.getElementById('options-container');
@@ -2893,14 +3818,61 @@
     function renderPalette() {
       const grid = document.getElementById('palette-grid');
       grid.innerHTML = '';
+      
+      // Calculate section counts
+      let techCount = 0, nonTechCount = 0;
       appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        if (section === 'Technical') techCount++;
+        else nonTechCount++;
+      });
+      
+      // Update section counts display
+      document.getElementById('non-tech-count').textContent = `Non-Tech: ${nonTechCount}`;
+      document.getElementById('tech-count').textContent = `Tech: ${techCount}`;
+      
+      // Filter questions based on current section filter
+      appState.filteredQuestionIndices = [];
+      appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        const shouldShow = appState.sectionFilter === 'all' || 
+                          (appState.sectionFilter === 'Technical' && section === 'Technical') ||
+                          (appState.sectionFilter === 'Non-Technical' && section === 'Non-Technical');
+        
+        if (shouldShow) {
+          appState.filteredQuestionIndices.push(i);
+        }
+        
         const btn = document.createElement('button');
         btn.textContent = i + 1;
         btn.className = 'palette-btn';
         btn.id = `palette-${i}`;
         btn.onclick = () => renderQuestion(i);
+        btn.style.display = shouldShow ? 'block' : 'none';
         grid.appendChild(btn);
       });
+    }
+    
+    function filterBySection(section) {
+      appState.sectionFilter = section;
+      
+      // Update button states
+      document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+      if (section === 'all') document.getElementById('btn-all-sections').classList.add('active');
+      else if (section === 'Non-Technical') document.getElementById('btn-non-tech').classList.add('active');
+      else if (section === 'Technical') document.getElementById('btn-tech').classList.add('active');
+      
+      // Re-render palette with filtered questions
+      renderPalette();
+      updatePalette();
+      
+      // Navigate to first visible question in filtered section
+      if (appState.filteredQuestionIndices.length > 0) {
+        const currentVisible = appState.filteredQuestionIndices.includes(appState.currentQuestionIndex);
+        if (!currentVisible) {
+          renderQuestion(appState.filteredQuestionIndices[0]);
+        }
+      }
     }
 
     function updatePalette() {
@@ -2922,8 +3894,17 @@
     }
 
     function navigateQuestion(delta) {
-      const newIndex = appState.currentQuestionIndex + delta;
-      if (newIndex >= 0 && newIndex < appState.examQuestions.length) renderQuestion(newIndex);
+      // If section filter is active, navigate within filtered questions
+      if (appState.sectionFilter !== 'all' && appState.filteredQuestionIndices.length > 0) {
+        const currentFilteredIdx = appState.filteredQuestionIndices.indexOf(appState.currentQuestionIndex);
+        const newFilteredIdx = currentFilteredIdx + delta;
+        if (newFilteredIdx >= 0 && newFilteredIdx < appState.filteredQuestionIndices.length) {
+          renderQuestion(appState.filteredQuestionIndices[newFilteredIdx]);
+        }
+      } else {
+        const newIndex = appState.currentQuestionIndex + delta;
+        if (newIndex >= 0 && newIndex < appState.examQuestions.length) renderQuestion(newIndex);
+      }
     }
 
     function saveAndNext() {
@@ -3043,21 +4024,21 @@
     function filterAndDisplayResults() {
       const reviewContainer = document.getElementById('questions-review');
       reviewContainer.innerHTML = '';
-      
+
       appState.examQuestions.forEach((q, i) => {
         const ans = appState.userAnswers[i];
         const isCorrect = ans.selectedOption === q.correctAnswer;
         const isUnanswered = ans.selectedOption === null;
         const isMarked = ans.markedForReview;
-        
+
         let questionType = isUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'incorrect');
         if (isMarked) questionType = 'marked';
-        
+
         if (appState.resultsFilter.size > 0 && !appState.resultsFilter.has(questionType)) return;
-        
+
         const div = document.createElement('div');
         div.className = `question-review ${isCorrect ? 'correct' : 'incorrect'}`;
-        let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
+        let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">ID: ${q.id}</span> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
         html += `<div class="question-text">${q.question}</div><div style="margin-top: 16px;">`;
         q.options.forEach((opt, j) => {
           const isUser = ans.selectedOption === j;
@@ -3067,10 +4048,15 @@
           if (isCorrectOpt) className += ' correct-answer';
           html += `<div class="${className}"><strong>${['A', 'B', 'C', 'D'][j]}.</strong> ${opt} ${isUser ? '<span class="badge">Your Answer</span>' : ''} ${isCorrectOpt ? '<span class="badge success">Correct</span>' : ''}</div>`;
         });
-        html += `</div><div class="explanation"><strong>Explanation:</strong> ${q.explanation}</div>`;
+        html += `</div><div class="explanation"><strong>Explanation:</strong> <span class="explanation-text">${q.explanation}</span></div>`;
         div.innerHTML = html;
         reviewContainer.appendChild(div);
       });
+      
+      // Re-render MathJax for all explanations in results
+      if (window.MathJax) {
+        MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      }
     }
 
     function renderResults() {
@@ -3081,7 +4067,7 @@
       document.getElementById('incorrect-count').textContent = r.incorrect;
       document.getElementById('unanswered-count').textContent = r.unanswered;
       document.getElementById('marked-count').textContent = r.marked;
-      
+
       appState.resultsFilter.clear();
       document.querySelectorAll('.stat-toggle').forEach(el => el.classList.remove('active'));
       filterAndDisplayResults();
@@ -3114,33 +4100,220 @@
     function exportToPDF() {
       const {jsPDF} = window.jspdf;
       const doc = new jsPDF();
+
+      const brandRed = [185, 28, 28];
+      const darkRed = [153, 27, 27];
+      const lightRed = [220, 38, 38];
+
       function stripLatex(text) {
         if (!text) return '';
+        // Remove $$ and $ delimiters
         text = text.replace(/\$\$(.*?)\$\$/g, '$1').replace(/\$(.*?)\$/g, '$1');
-        text = text.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)').replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
-        text = text.replace(/\\phi/g, 'φ').replace(/\\theta/g, 'θ').replace(/\\omega/g, 'ω').replace(/\\alpha/g, 'α').replace(/\\beta/g, 'β').replace(/\\sum/g, '∑').replace(/\\times/g, '×').replace(/\\pm/g, '±').replace(/\\_/g, '_').replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
+        // Handle fractions
+        text = text.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+        // Handle sqrt
+        text = text.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+        // Handle subscripts: I_r becomes Iᵣ, I_{ab} becomes Iₐᵦ
+        text = text.replace(/([A-Za-z])_\{([^}]+)\}/g, (match, base, sub) => base + convertToSubscript(sub));
+        text = text.replace(/([A-Za-z])_([A-Za-z0-9])/g, (match, base, sub) => base + convertToSubscript(sub));
+        // Handle superscripts: x^2 becomes x², x^{2n} becomes x²ⁿ
+        text = text.replace(/\^(\{([^}]+)\}|([0-9]+))/g, (match, full, braced, simple) => convertToSuperscript(braced || simple));
+        // Greek letters
+        text = text.replace(/\\phi/g, 'φ').replace(/\\Phi/g, 'Φ');
+        text = text.replace(/\\theta/g, 'θ').replace(/\\Theta/g, 'Θ');
+        text = text.replace(/\\omega/g, 'ω').replace(/\\Omega/g, 'Ω');
+        text = text.replace(/\\alpha/g, 'α').replace(/\\Alpha/g, 'Α');
+        text = text.replace(/\\beta/g, 'β').replace(/\\Beta/g, 'Β');
+        text = text.replace(/\\gamma/g, 'γ').replace(/\\Gamma/g, 'Γ');
+        text = text.replace(/\\delta/g, 'δ').replace(/\\Delta/g, 'Δ');
+        text = text.replace(/\\pi/g, 'π').replace(/\\Pi/g, 'Π');
+        text = text.replace(/\\sigma/g, 'σ').replace(/\\Sigma/g, 'Σ');
+        text = text.replace(/\\mu/g, 'μ').replace(/\\eta/g, 'η');
+        text = text.replace(/\\lambda/g, 'λ').replace(/\\Lambda/g, 'Λ');
+        text = text.replace(/\\rho/g, 'ρ').replace(/\\tau/g, 'τ');
+        // Math symbols
+        text = text.replace(/\\sum/g, '∑').replace(/\\prod/g, '∏');
+        text = text.replace(/\\times/g, '×').replace(/\\cdot/g, '·');
+        text = text.replace(/\\pm/g, '±').replace(/\\mp/g, '∓');
+        text = text.replace(/\\div/g, '÷').replace(/\\neq/g, '≠');
+        text = text.replace(/\\leq/g, '≤').replace(/\\geq/g, '≥');
+        text = text.replace(/\\approx/g, '≈').replace(/\\infty/g, '∞');
+        text = text.replace(/\\rightarrow/g, '→').replace(/\\leftarrow/g, '←');
+        text = text.replace(/\\degree/g, '°').replace(/\\circ/g, '°');
+        text = text.replace(/\\_/g, '_');
+        // Clean up remaining LaTeX commands and braces
+        text = text.replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
         return text.trim();
       }
-      let yPos = 20;
-      doc.setFontSize(18); doc.text('NRL Mock Test - Results', 105, yPos, {align: 'center'}); yPos += 15;
-      doc.setFontSize(14); doc.text(`Score: ${appState.results.correct}/${appState.results.total} (${appState.results.percentage}%)`, 20, yPos); yPos += 20;
+      
+      function convertToSubscript(str) {
+        const subMap = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
+          'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ',
+          '+':'₊','-':'₋','=':'₌','(':'₍',')':'₎'};
+        return str.split('').map(c => subMap[c] || c).join('');
+      }
+      
+      function convertToSuperscript(str) {
+        const supMap = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
+          'a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','i':'ⁱ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','n':'ⁿ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ',
+          '+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾'};
+        return str.split('').map(c => supMap[c] || c).join('');
+      }
+
+      let yPos = 15;
+
+      doc.setDrawColor(...brandRed);
+      doc.setLineWidth(2);
+      doc.line(10, 10, 200, 10);
+
+      const logoX = 70;
+      const logoY = 14;
+      const logoW = 70;
+      const logoH = 25;
+
+      doc.setDrawColor(...brandRed);
+      doc.setLineWidth(1);
+      doc.rect(logoX, logoY, logoW, logoH);
+
+      doc.setLineWidth(0.5);
+      doc.rect(logoX + 2, logoY + 2, logoW - 4, logoH - 4);
+
+      doc.setFillColor(...brandRed);
+      doc.rect(logoX + 4, logoY + 4, 4, logoH - 8, 'F');
+      doc.rect(logoX + logoW - 8, logoY + 4, 4, logoH - 8, 'F');
+
+      doc.rect(logoX + 4, logoY + 4, logoW - 8, 3, 'F');
+      doc.rect(logoX + 4, logoY + logoH - 7, logoW - 8, 3, 'F');
+
+      const centerX = logoX + logoW / 2;
+      doc.setFillColor(...brandRed);
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 5; col++) {
+          const cx = logoX + 14 + col * 10;
+          const cy = logoY + 10 + row * 8;
+          doc.circle(cx, cy, 1.2, 'F');
+        }
+      }
+
+      const leftDiamondX = logoX + 8;
+      const rightDiamondX = logoX + logoW - 8;
+      [logoY + 9, logoY + 16].forEach(dy => {
+        doc.circle(leftDiamondX, dy, 0.6, 'F');
+        doc.circle(rightDiamondX, dy, 0.6, 'F');
+      });
+
+      yPos = logoY + logoH + 8;
+
+      doc.setTextColor(...brandRed);
+      doc.setFontSize(28);
+      doc.setFont(undefined, 'bold');
+      doc.text('Assami', 105, yPos, {align: 'center'});
+      yPos += 10;
+
+      doc.setFontSize(12);
+      doc.setTextColor(...darkRed);
+      doc.text('Mock Test Results', 105, yPos, {align: 'center'});
+      yPos += 12;
+
+      doc.setLineWidth(0.5);
+      doc.line(60, yPos, 150, yPos);
+      yPos += 10;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Score: ${appState.results.correct}/${appState.results.total}`, 105, yPos, {align: 'center'});
+      yPos += 8;
+
+      doc.setTextColor(...brandRed);
+      doc.setFontSize(20);
+      doc.text(`${appState.results.percentage}%`, 105, yPos, {align: 'center'});
+      yPos += 15;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(20, yPos, 190, yPos);
+      yPos += 10;
+
+      doc.setTextColor(0, 0, 0);
       appState.examQuestions.forEach((q, i) => {
-        if (yPos > 250) {doc.addPage(); yPos = 20;}
-        const ans = appState.userAnswers[i]; const isCorrect = ans.selectedOption === q.correctAnswer;
-        doc.setFontSize(11); doc.setFont(undefined, 'bold'); doc.text(`Q${i + 1}. [${q.difficulty}]`, 20, yPos); yPos += 7;
-        doc.setFont(undefined, 'normal'); doc.setFontSize(10); const qText = stripLatex(q.question); const qLines = doc.splitTextToSize(qText, 170); doc.text(qLines, 20, yPos); yPos += qLines.length * 5 + 3;
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+          doc.setDrawColor(...brandRed);
+          doc.setLineWidth(1);
+          doc.line(10, 10, 200, 10);
+          doc.setTextColor(...brandRed);
+          doc.setFontSize(10);
+          doc.text('Assami - Mock Test Results', 105, 16, {align: 'center'});
+          yPos = 25;
+        }
+        const ans = appState.userAnswers[i];
+        const isCorrect = ans.selectedOption === q.correctAnswer;
+
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...brandRed);
+        doc.text(`Q${i + 1}.`, 20, yPos);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont(undefined, 'normal');
+        doc.text(`[${q.difficulty}]`, 32, yPos);
+        yPos += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        const qText = stripLatex(q.question);
+        const qLines = doc.splitTextToSize(qText, 170);
+        doc.text(qLines, 20, yPos);
+        yPos += qLines.length * 5 + 3;
+
         doc.setFontSize(9);
         q.options.forEach((opt, j) => {
-          const letter = ['A', 'B', 'C', 'D'][j]; const isUser = ans.selectedOption === j; const isCorrectOpt = j === q.correctAnswer;
-          if (isUser) doc.setFont(undefined, 'bold'); if (isCorrectOpt) doc.setTextColor(0, 128, 0);
-          const optText = stripLatex(opt); const optLines = doc.splitTextToSize(`${letter}. ${optText}`, 165); doc.text(optLines, 25, yPos); yPos += optLines.length * 4 + 2;
-          doc.setFont(undefined, 'normal'); doc.setTextColor(0, 0, 0);
+          const letter = ['A', 'B', 'C', 'D'][j];
+          const isUser = ans.selectedOption === j;
+          const isCorrectOpt = j === q.correctAnswer;
+
+          if (isUser) doc.setFont(undefined, 'bold');
+          if (isCorrectOpt) doc.setTextColor(0, 128, 0);
+          else if (isUser && !isCorrect) doc.setTextColor(...lightRed);
+
+          const optText = stripLatex(opt);
+          const optLines = doc.splitTextToSize(`${letter}. ${optText}`, 165);
+          doc.text(optLines, 25, yPos);
+          yPos += optLines.length * 4 + 2;
+
+          doc.setFont(undefined, 'normal');
+          doc.setTextColor(0, 0, 0);
         });
-        yPos += 2; if (isCorrect) {doc.setTextColor(0, 128, 0); doc.text('✓ Correct', 25, yPos);} else {doc.setTextColor(255, 0, 0); doc.text(`✗ Incorrect (Correct: ${['A', 'B', 'C', 'D'][q.correctAnswer]})`, 25, yPos);}
-        doc.setTextColor(0, 0, 0); yPos += 6;
-        doc.setFontSize(8); doc.setTextColor(100, 100, 100); const expText = stripLatex(q.explanation); const expLines = doc.splitTextToSize(`Explanation: ${expText}`, 165); doc.text(expLines, 25, yPos); yPos += expLines.length * 4 + 8;
+
+        yPos += 2;
+        if (isCorrect) {
+          doc.setTextColor(0, 128, 0);
+          doc.text('✓ Correct', 25, yPos);
+        } else {
+          doc.setTextColor(...lightRed);
+          doc.text(`✗ Incorrect (Correct: ${['A', 'B', 'C', 'D'][q.correctAnswer]})`, 25, yPos);
+        }
+        doc.setTextColor(0, 0, 0);
+        yPos += 6;
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        const expText = stripLatex(q.explanation);
+        const expLines = doc.splitTextToSize(`Explanation: ${expText}`, 165);
+        doc.text(expLines, 25, yPos);
+        yPos += expLines.length * 4 + 8;
       });
-      doc.save(`NRL_Mock_Test_Results_${new Date().toISOString().split('T')[0]}.pdf`);
+
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(`Assami Mock Test - Page ${i} of ${pageCount}`, 105, 290, {align: 'center'});
+      }
+
+      doc.save(`Assami_Mock_Test_Results_${new Date().toISOString().split('T')[0]}.pdf`);
     }
 
 
@@ -3258,12 +4431,100 @@
       loadSavedPosition();
     })();
 
-    // === REAL-TIME VISITOR COUNTER (Flask Backend API) ===
+    // === DYNAMIC STATS COUNTER WITH ANIMATION ===
+    function animateNumber(elementId, target, suffix = '') {
+      const el = document.getElementById(elementId);
+      if (!el) {
+        console.log('Element not found:', elementId);
+        return;
+      }
+
+      const duration = 2000;
+      const startTime = performance.now();
+      const startValue = 0;
+
+      function easeOutQuart(t) {
+        return 1 - Math.pow(1 - t, 4);
+      }
+
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOutQuart(progress);
+        const current = Math.floor(startValue + (target - startValue) * eased);
+
+        el.textContent = current + suffix;
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          el.textContent = target + suffix;
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    async function loadAndAnimateStats() {
+      const questionsEl = document.getElementById('stat-questions');
+      const branchesEl = document.getElementById('stat-branches');
+      const examsEl = document.getElementById('stat-exams');
+
+      if (!questionsEl || !branchesEl || !examsEl) {
+        console.log('Stats elements not found, retrying...');
+        setTimeout(loadAndAnimateStats, 200);
+        return;
+      }
+
+      try {
+        const response = await fetch(CSV_URL);
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {header: true, skipEmptyLines: true});
+
+        const questions = parsed.data.length;
+        const branches = new Set();
+        const exams = new Set();
+
+        parsed.data.forEach(row => {
+          if (row.Branch && row.Branch.trim()) branches.add(row.Branch.trim());
+          if (row['Exam Type'] && row['Exam Type'].trim()) exams.add(row['Exam Type'].trim());
+          if (row['ExamType'] && row['ExamType'].trim()) exams.add(row['ExamType'].trim());
+        });
+
+        console.log('Stats loaded:', questions, branches.size, exams.size);
+
+        // Set values immediately first
+        questionsEl.textContent = '0+';
+        branchesEl.textContent = '0';
+        examsEl.textContent = '0';
+
+        // Then animate
+        setTimeout(() => {
+          animateNumber('stat-questions', questions, '+');
+          animateNumber('stat-branches', branches.size, '');
+          animateNumber('stat-exams', exams.size, '');
+        }, 100);
+
+      } catch (error) {
+        console.log('Loading default stats:', error);
+        questionsEl.textContent = '709+';
+        branchesEl.textContent = '7';
+        examsEl.textContent = '2';
+      }
+    }
+
+    // Initialize stats animation when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(loadAndAnimateStats, 300));
+    } else {
+      setTimeout(loadAndAnimateStats, 300);
+    }
+
+    // === LOCAL VISITOR COUNTER ===
     (function () {
       const el = document.getElementById('visitor-number');
       if (!el) return;
 
-      // Helper to animate number
       function animateCount(target) {
         const duration = 1200;
         const startTime = performance.now();
@@ -3278,36 +4539,19 @@
         requestAnimationFrame(update);
       }
 
-      async function updateCounter() {
-        try {
-          // Call our Flask backend API to track and get visitor count
-          const resp = await fetch('/api/visitors/track');
+      function updateCounter() {
+        let count = parseInt(localStorage.getItem('visitorCount') || '1000');
+        const hasVisited = localStorage.getItem('hasVisited');
 
-          if (!resp.ok) {
-            throw new Error(`API error: ${resp.status}`);
-          }
-
-          const data = await resp.json();
-
-          if (data && typeof data.totalVisitors === 'number') {
-            animateCount(data.totalVisitors);
-
-            // Log if this is a new visitor (for debugging)
-            if (data.isNewVisitor) {
-              console.log('Welcome! You are visitor #' + data.totalVisitors);
-            }
-          } else {
-            throw new Error('Invalid API response');
-          }
-
-        } catch (e) {
-          console.error('Failed to track visitor:', e);
-          // Show error state
-          el.textContent = '---';
+        if (!hasVisited) {
+          count += 1;
+          localStorage.setItem('visitorCount', count.toString());
+          localStorage.setItem('hasVisited', 'true');
         }
+
+        animateCount(count);
       }
 
-      // Initialize (small delay so UI can render)
       setTimeout(updateCounter, 400);
     })();
 
