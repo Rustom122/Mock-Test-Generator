@@ -2890,10 +2890,8 @@
         <div id="section-toggle-container" class="section-toggle-container" style="display: none;">
           <div class="section-toggle-header">Section Navigation</div>
           <div class="section-toggle-buttons">
-            <button class="section-toggle-btn active" id="btn-all-sections"
-              onclick="filterBySection('all')">All</button>
-            <button class="section-toggle-btn" id="btn-non-tech"
-              onclick="filterBySection('Non-Technical')">Non-Technical</button>
+            <button class="section-toggle-btn active" id="btn-all-sections" onclick="filterBySection('all')">All</button>
+            <button class="section-toggle-btn" id="btn-non-tech" onclick="filterBySection('Non-Technical')">Non-Technical</button>
             <button class="section-toggle-btn" id="btn-tech" onclick="filterBySection('Technical')">Technical</button>
           </div>
           <div class="section-counts">
@@ -3083,11 +3081,1482 @@
     </div>
   </div>
 
-  <!-- App scripts -->
-  <script src="assets/js/core-ui.js"></script>
-  <script src="assets/js/exam-engine.js"></script>
-  <script src="assets/js/results-view.js"></script>
-  <script src="assets/js/init.js"></script>
+  <script>
+    const appState = {
+      currentScreen: 'config',
+      allQuestions: [],
+      examQuestions: [],
+      currentQuestionIndex: 0,
+      userAnswers: [],
+      timerInterval: null,
+      config: {},
+      results: {},
+      examMode: 'full',
+      selectedSubjects: [],
+      selectedChapters: [],
+      selectedTopics: [],
+      isAutoSubmit: false,
+      selectedBranch: null,
+      selectedExam: null,
+      branches: [],
+      exams: [],
+      resultsFilter: new Set(),
+      sectionFilter: 'all',
+      filteredQuestionIndices: []
+    };
+
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjJ_eWAoVK2SXvTMvN0BM4SHo60i-0WE6UKmu4rTao2sLynOMvoQ427mHd2u9YWGeNjOYncb2S3YAf/pub?output=csv';
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const newTheme = current === 'dark' ? 'light-purple' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      document.getElementById('theme-icon').textContent = newTheme === 'dark' ? '🌙' : '☀️';
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const saved = localStorage.getItem('theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', saved);
+      document.getElementById('theme-icon').textContent = saved === 'dark' ? '🌙' : '☀️';
+
+      initBurgerMenu();
+
+      try {
+        showLoadingOverlay('Loading question bank...');
+        appState.allQuestions = await fetchQuestions();
+        populateSubjects();
+        loadBranchesAndExams();
+        hideLoadingOverlay();
+      } catch (error) {
+        hideLoadingOverlay();
+        console.error('Error fetching questions:', error);
+      }
+    });
+
+    function initBurgerMenu() {
+      const btn = document.getElementById('burger-menu-btn');
+      const overlay = document.getElementById('burger-menu-overlay');
+      const panel = document.getElementById('burger-menu-panel');
+
+      btn.addEventListener('click', () => {
+        const isActive = panel.classList.contains('active');
+        if (isActive) {
+          closeBurgerMenu();
+        } else {
+          showBurgerMenu();
+        }
+        btn.classList.toggle('active');
+      });
+
+      overlay.addEventListener('click', () => {
+        btn.classList.remove('active');
+        closeBurgerMenu();
+      });
+    }
+
+    function loadBranchesAndExams() {
+      // Extract unique branches and exams from the loaded CSV data
+      const allBranches = appState.allQuestions.map(q => q.branch).filter(Boolean).map(b => b.trim());
+      const allExams = appState.allQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim());
+
+      appState.branches = [...new Set(allBranches)].sort();
+      appState.exams = [...new Set(allExams)].sort();
+
+      console.log('Extracted Branches:', appState.branches);
+      console.log('Extracted Exams:', appState.exams);
+
+      populateBranchesAndExams();
+    }
+
+    function populateBranchesAndExams() {
+      const branchContainer = document.getElementById('branches-container');
+      const examContainer = document.getElementById('exams-container');
+
+      branchContainer.innerHTML = appState.branches.map(branch =>
+        `<div class="capsule" data-branch="${branch}" onclick="selectBranch(this, '${branch}')">${branch}</div>`
+      ).join('');
+
+      examContainer.innerHTML = appState.exams.map(exam =>
+        `<div class="capsule" data-exam="${exam}" onclick="selectExam(this, '${exam}')">${exam}</div>`
+      ).join('');
+    }
+
+    function selectBranch(el, branch) {
+      document.querySelectorAll('#branches-container .capsule').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      appState.selectedBranch = branch;
+      localStorage.setItem('selectedBranch', branch);
+
+      // Clear selected exam when branch changes
+      appState.selectedExam = null;
+      localStorage.removeItem('selectedExam');
+      document.querySelectorAll('#exams-container .capsule').forEach(c => c.classList.remove('selected'));
+
+      // Update available exams for this branch
+      updateExamsForBranch(branch);
+      filterQuestionsByBranchAndExam();
+    }
+
+    function updateExamsForBranch(branch) {
+      // Get all questions for the selected branch
+      const branchQuestions = appState.allQuestions.filter(q => q.branch && q.branch.trim() === branch);
+
+      // Extract unique exams for this branch
+      const availableExams = [...new Set(
+        branchQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim())
+      )].sort();
+
+      console.log('Available exams for', branch, ':', availableExams);
+
+      // Update the exams container
+      const examContainer = document.getElementById('exams-container');
+      examContainer.innerHTML = availableExams.map(exam =>
+        `<div class="capsule" data-exam="${exam}" onclick="selectExam(this, '${exam}')">${exam}</div>`
+      ).join('');
+    }
+
+    function selectExam(el, exam) {
+      document.querySelectorAll('#exams-container .capsule').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      appState.selectedExam = exam;
+      localStorage.setItem('selectedExam', exam);
+      filterQuestionsByBranchAndExam();
+    }
+
+    function filterQuestionsByBranchAndExam() {
+      let filtered = appState.allQuestions;
+      if (appState.selectedBranch) {
+        filtered = filtered.filter(q => q.branch && q.branch.trim() === appState.selectedBranch);
+      }
+      if (appState.selectedExam) {
+        filtered = filtered.filter(q => q.examType && q.examType.trim() === appState.selectedExam);
+      }
+      appState.filteredQuestions = filtered;
+      console.log('Filtered questions count:', filtered.length);
+    }
+
+    function toggleExamMode() {
+      const toggle = document.getElementById('mode-toggle');
+      const current = toggle.getAttribute('data-mode');
+      const newMode = current === 'full' ? 'subject' : 'full';
+
+      toggle.setAttribute('data-mode', newMode);
+      appState.examMode = newMode;
+
+      document.getElementById('full-mode-label').classList.toggle('active');
+      document.getElementById('subject-mode-label').classList.toggle('active');
+
+      if (newMode === 'full') {
+        document.getElementById('full-test-mode').style.display = 'block';
+        document.getElementById('subject-wise-mode').style.display = 'none';
+      } else {
+        document.getElementById('full-test-mode').style.display = 'none';
+        document.getElementById('subject-wise-mode').style.display = 'block';
+        document.getElementById('subject-selection').style.display = 'block';
+        populateSubjects();
+      }
+    }
+
+    function populateSubjects() {
+      // Filter by selected branch and exam for subject-wise mode
+      let questionsToFilter = appState.allQuestions;
+
+      if (appState.selectedBranch && appState.selectedExam) {
+        questionsToFilter = appState.allQuestions.filter(q =>
+          q.branch && q.branch.trim() === appState.selectedBranch &&
+          q.examType && q.examType.trim() === appState.selectedExam
+        );
+      }
+
+      const subjects = [...new Set(questionsToFilter.map(q => q.subject).filter(Boolean))];
+      console.log('All subjects found:', subjects);
+      console.log('Total questions:', questionsToFilter.length);
+      console.log('Sample question subjects:', questionsToFilter.slice(0, 5).map(q => q.subject));
+
+      const container = document.getElementById('subject-checkboxes');
+      container.innerHTML = '';
+
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="onSubjectChange()">
+          <label for="subj-${idx}">${subj}</label>
+        `;
+        container.appendChild(div);
+      });
+
+      // Store filtered questions for subject-wise mode
+      appState.filteredQuestions = questionsToFilter;
+    }
+
+    function onSubjectChange() {
+      const checked = Array.from(document.querySelectorAll('#subject-checkboxes input:checked')).map(cb => cb.value);
+      appState.selectedSubjects = checked;
+
+      if (checked.length > 0) {
+        populateChapters(checked);
+        const chap = document.getElementById('chapter-selection');
+        const top = document.getElementById('topic-selection');
+        chap.style.display = 'block';
+        // start in collapsed state so user can open via the collapsible icon only
+        chap.classList.add('collapsed');
+        if (top) {top.style.display = 'block'; top.classList.add('collapsed');}
+      } else {
+        document.getElementById('chapter-selection').style.display = 'none';
+        document.getElementById('topic-selection').style.display = 'none';
+      }
+    }
+
+    function populateChapters(subjects) {
+      const chapters = [...new Set(
+        appState.allQuestions
+          .filter(q => subjects.includes(q.subject))
+          .map(q => q.chapter)
+          .filter(Boolean)
+      )];
+
+      const container = document.getElementById('chapter-checkboxes');
+      container.innerHTML = '';
+
+      chapters.forEach((chap, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="chap-${idx}" value="${chap}" checked onchange="onChapterChange()">
+          <label for="chap-${idx}">${chap}</label>
+        `;
+        container.appendChild(div);
+      });
+
+      onChapterChange();
+    }
+
+    function onChapterChange() {
+      const checked = Array.from(document.querySelectorAll('#chapter-checkboxes input:checked')).map(cb => cb.value);
+      appState.selectedChapters = checked;
+
+      if (checked.length > 0) {
+        populateTopics(appState.selectedSubjects, checked);
+        document.getElementById('topic-selection').style.display = 'block';
+      } else {
+        document.getElementById('topic-selection').style.display = 'none';
+      }
+    }
+
+    function populateTopics(subjects, chapters) {
+      const topics = [...new Set(
+        appState.allQuestions
+          .filter(q => subjects.includes(q.subject) && chapters.includes(q.chapter))
+          .map(q => q.topic)
+          .filter(Boolean)
+      )];
+
+      const container = document.getElementById('topic-checkboxes');
+      container.innerHTML = '';
+
+      topics.forEach((topic, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="topic-${idx}" value="${topic}" checked>
+          <label for="topic-${idx}">${topic}</label>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function toggleCollapsible(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('collapsed');
+    }
+
+    function toggleSelectAll(type) {
+      let checkboxes;
+      if (type === 'subjects') checkboxes = document.querySelectorAll('#subject-checkboxes input');
+      else if (type === 'chapters') checkboxes = document.querySelectorAll('#chapter-checkboxes input');
+      else checkboxes = document.querySelectorAll('#topic-checkboxes input');
+
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      checkboxes.forEach(cb => cb.checked = !allChecked);
+
+      if (type === 'subjects') onSubjectChange();
+      else if (type === 'chapters') onChapterChange();
+    }
+
+    function showModal(title, body, buttons) {
+      document.getElementById('modal-header').textContent = title;
+      document.getElementById('modal-body').innerHTML = body;
+
+      const buttonContainer = document.getElementById('modal-buttons');
+      buttonContainer.innerHTML = '';
+      buttons.forEach(btn => {
+        const button = document.createElement('button');
+        button.className = `modal-btn ${btn.primary ? 'modal-btn-primary' : 'modal-btn-secondary'}`;
+        button.textContent = btn.text;
+        button.onclick = btn.action;
+        buttonContainer.appendChild(button);
+      });
+
+      document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    function hideModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    function switchScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(`${screenName}-screen`).classList.add('active');
+      appState.currentScreen = screenName;
+
+      // Show/hide burger menu based on current screen
+      const burgerBtn = document.getElementById('burger-menu-btn');
+
+      if (screenName === 'config') {
+        burgerBtn.classList.remove('hidden');
+      } else if (screenName === 'landing') {
+        burgerBtn.classList.add('hidden');
+        closeBurgerMenu();
+      } else {
+        burgerBtn.classList.add('hidden');
+      }
+
+      setTimeout(() => {window.scrollTo(0, 0); document.body.scrollTop = 0; document.documentElement.scrollTop = 0;}, 0);
+    }
+
+    // Show burger menu from landing page - make globally accessible
+    window.showBurgerMenu = function () {
+      document.getElementById('burger-menu-overlay').classList.add('active');
+      document.getElementById('burger-menu-overlay').classList.remove('hidden');
+      document.getElementById('burger-menu-panel').classList.add('active');
+      document.getElementById('burger-menu-panel').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close burger menu - make globally accessible
+    window.closeBurgerMenu = function () {
+      document.getElementById('burger-menu-overlay').classList.remove('active');
+      document.getElementById('burger-menu-panel').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    // Proceed to configuration page after burger menu selections - make globally accessible
+    window.proceedToConfig = function () {
+      const userName = document.getElementById('user-name-input').value.trim();
+
+      if (!appState.selectedBranch) {
+        showModal('Selection Required', 'Please select a branch to continue.', [
+          {text: 'OK', primary: true, action: hideModal}
+        ]);
+        return;
+      }
+
+      if (!appState.selectedExam) {
+        showModal('Selection Required', 'Please select an exam type to continue.', [
+          {text: 'OK', primary: true, action: hideModal}
+        ]);
+        return;
+      }
+
+      // Store user name
+      appState.userName = userName || 'Student';
+      localStorage.setItem('userName', appState.userName);
+
+      // Update exam name with user's name
+      const examNameInput = document.getElementById('exam-name');
+      if (examNameInput && userName) {
+        examNameInput.value = `${userName}'s Mock Test`;
+      }
+
+      // Add user welcome message
+      const configContainer = document.querySelector('.config-container');
+      let welcomeEl = document.getElementById('user-welcome-msg');
+      if (!welcomeEl) {
+        welcomeEl = document.createElement('div');
+        welcomeEl.id = 'user-welcome-msg';
+        welcomeEl.className = 'user-welcome';
+        const subtitleEl = configContainer.querySelector('.config-subtitle');
+        if (subtitleEl) {
+          subtitleEl.after(welcomeEl);
+        }
+      }
+      welcomeEl.innerHTML = `<span>Welcome, <strong>${appState.userName}</strong>! You selected <strong>${appState.selectedBranch}</strong> - <strong>${appState.selectedExam}</strong></span>`;
+
+      // Close burger menu and switch to config screen
+      closeBurgerMenu();
+      switchScreen('config');
+
+      // Populate subjects based on selected branch for subject-wise mode
+      populateSubjectsForBranch();
+    }
+
+    // Populate subjects filtered by selected branch
+    function populateSubjectsForBranch() {
+      if (!appState.selectedBranch) return;
+
+      // Filter questions by selected branch and exam
+      const branchQuestions = appState.allQuestions.filter(q =>
+        q.branch && q.branch.trim() === appState.selectedBranch &&
+        q.examType && q.examType.trim() === appState.selectedExam
+      );
+
+      const subjects = [...new Set(branchQuestions.map(q => q.subject).filter(Boolean))];
+
+      const container = document.getElementById('subject-checkboxes');
+      container.innerHTML = '';
+
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="onSubjectChange()">
+          <label for="subj-${idx}">${subj}</label>
+        `;
+        container.appendChild(div);
+      });
+
+      // Store filtered questions for subject-wise mode
+      appState.filteredQuestions = branchQuestions;
+    }
+
+    function showLoadingOverlay(text) {
+      document.getElementById('loading-text').textContent = text;
+      document.getElementById('loading-overlay').classList.add('active');
+    }
+
+    function hideLoadingOverlay() {
+      document.getElementById('loading-overlay').classList.remove('active');
+    }
+
+    async function fetchQuestions() {
+      const response = await fetch(CSV_URL);
+      const csvText = await response.text();
+      const parsed = Papa.parse(csvText, {header: true, skipEmptyLines: true});
+
+      // Helper function to find column name with flexible matching
+      function findColumn(row, possibleNames) {
+        for (let name of possibleNames) {
+          if (row[name]) return row[name];
+        }
+        // Try case-insensitive and whitespace-insensitive matching
+        const keys = Object.keys(row);
+        for (let key of keys) {
+          const normalizedKey = key.trim().toLowerCase();
+          for (let name of possibleNames) {
+            if (normalizedKey === name.toLowerCase()) return row[key];
+          }
+        }
+        return null;
+      }
+
+      if (parsed.data.length > 0) {
+        console.log('CSV Column Headers:', Object.keys(parsed.data[0]));
+        console.log('First row data:', parsed.data[0]);
+      }
+
+      const allQuestions = parsed.data.map((row, index) => ({
+        id: findColumn(row, ['Id', 'ID', 'id']) || String(index + 1),
+        question: findColumn(row, ['Question']) || '',
+        options: [
+          findColumn(row, ['OptionA', 'Option A']) || '',
+          findColumn(row, ['OptionB', 'Option B']) || '',
+          findColumn(row, ['OptionC', 'Option C']) || '',
+          findColumn(row, ['OptionD', 'Option D']) || ''
+        ],
+        correctAnswer: parseInt(findColumn(row, ['Answer']) || 0) || 0,
+        difficulty: findColumn(row, ['Difficulty']) || 'Medium',
+        subject: findColumn(row, ['Subject', 'Category']) || 'General',
+        chapter: findColumn(row, ['Chapter']) || 'General',
+        topic: findColumn(row, ['Topic']) || 'General',
+        explanation: findColumn(row, ['Explanation']) || 'No explanation available.',
+        questionType: findColumn(row, ['QuestionType', 'Question Type']) || 'Theoretical',
+        branch: findColumn(row, ['Branch']) || 'General',
+        examType: findColumn(row, ['Exam Type', 'ExamType']) || 'General',
+        status: (findColumn(row, ['Status', 'status']) || 'Yes').trim().toLowerCase()
+      }));
+      
+      // Filter questions by Status - only include questions where Status is "Yes"
+      return allQuestions.filter(q => q.status === 'yes');
+    }
+
+    function prepareExamQuestions(filtered) {
+      // Remove duplicate questions based on ID
+      const seenIds = new Set();
+      const uniqueFiltered = filtered.filter(q => {
+        if (seenIds.has(q.id)) return false;
+        seenIds.add(q.id);
+        return true;
+      });
+      
+      let shuffled = shuffleArray(uniqueFiltered);
+      return shuffled.map(q => {
+        const optionsWithIndex = q.options.map((opt, idx) => ({option: opt, originalIndex: idx}));
+        const shuffledOpts = shuffleArray(optionsWithIndex);
+        const newCorrect = shuffledOpts.findIndex(item => item.originalIndex === q.correctAnswer);
+        return {...q, options: shuffledOpts.map(item => item.option), correctAnswer: newCorrect};
+      });
+    }
+
+    function classifySection(subject) {
+      if (!subject) return "Non-Technical";
+      const normalized = subject.trim().toLowerCase();
+      const nonTechnicalKeywords = ['aptitude', 'reasoning', 'general knowledge', 'general/mixed', 'english', 'verbal', 'quantitative', 'logical', 'gk'];
+      return nonTechnicalKeywords.some(keyword => normalized.includes(keyword)) ? "Non-Technical" : "Technical";
+    }
+
+    function filterQuestionsFullTest(all, techCount, nonTechCount, difficulties, questionTypes) {
+      // Use filtered questions if branch/exam is selected, otherwise use all
+      const sourceQuestions = appState.filteredQuestions && appState.filteredQuestions.length > 0 ? appState.filteredQuestions : all;
+      let techFiltered = sourceQuestions.filter(q =>
+        classifySection(q.subject) === 'Technical' &&
+        difficulties.includes(q.difficulty) &&
+        questionTypes.includes(q.questionType)
+      );
+
+      let nonTechFiltered = sourceQuestions.filter(q =>
+        classifySection(q.subject) === 'Non-Technical' &&
+        difficulties.includes(q.difficulty) &&
+        questionTypes.includes(q.questionType)
+      );
+
+      const techQuestions = shuffleArray(techFiltered).slice(0, techCount);
+      const nonTechQuestions = shuffleArray(nonTechFiltered).slice(0, nonTechCount);
+
+      return [...techQuestions, ...nonTechQuestions];
+    }
+
+    function filterQuestionsSubjectWise(all, subjects, chapters, topics, numQuestions, questionTypes, difficulties) {
+      // Use filtered questions if branch/exam is selected, otherwise use all
+      const sourceQuestions = appState.filteredQuestions && appState.filteredQuestions.length > 0 ? appState.filteredQuestions : all;
+      let filtered = sourceQuestions.filter(q =>
+        subjects.includes(q.subject) &&
+        chapters.includes(q.chapter) &&
+        (topics.length === 0 || topics.includes(q.topic)) &&
+        questionTypes.includes(q.questionType) &&
+        (difficulties.length === 0 || difficulties.includes(q.difficulty))
+      );
+      return shuffleArray(filtered).slice(0, numQuestions);
+    }
+
+    async function startExam() {
+      try {
+        showLoadingOverlay('Preparing exam...');
+
+        if (appState.allQuestions.length === 0) {
+          appState.allQuestions = await fetchQuestions();
+        }
+
+        let filtered;
+        let duration;
+        let techQ, nonTechQ;
+
+        if (appState.examMode === 'full') {
+          techQ = parseInt(document.getElementById('tech-questions-full').value) || 0;
+          nonTechQ = parseInt(document.getElementById('nontech-questions-full').value) || 0;
+          const difficulties = Array.from(document.querySelectorAll('#difficulty-checkboxes input:checked')).map(cb => cb.value);
+          const questionTypes = Array.from(document.querySelectorAll('#question-type-checkboxes input:checked')).map(cb => cb.value);
+
+          if (techQ + nonTechQ === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least some questions (Technical or Non-Technical).',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          if (difficulties.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one difficulty level.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          if (questionTypes.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one question type.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          filtered = filterQuestionsFullTest(appState.allQuestions, techQ, nonTechQ, difficulties, questionTypes);
+          duration = parseInt(document.getElementById('duration').value) || 90;
+        } else {
+          const selectedSubjects = Array.from(document.querySelectorAll('#subject-checkboxes input:checked')).map(cb => cb.value);
+          const selectedChapters = Array.from(document.querySelectorAll('#chapter-checkboxes input:checked')).map(cb => cb.value);
+          const selectedTopics = Array.from(document.querySelectorAll('#topic-checkboxes input:checked')).map(cb => cb.value);
+          const subjectQuestionTypes = Array.from(document.querySelectorAll('#subject-question-type-checkboxes input:checked')).map(cb => cb.value);
+          const subjectDifficulties = Array.from(document.querySelectorAll('#subject-difficulty-checkboxes input:checked')).map(cb => cb.value);
+          const numQ = parseInt(document.getElementById('subject-questions').value) || 60;
+
+          if (selectedSubjects.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one subject.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          if (selectedChapters.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one chapter.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          if (subjectQuestionTypes.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one question type.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          if (subjectDifficulties.length === 0) {
+            hideLoadingOverlay();
+            showModal('Invalid Configuration',
+              'Please select at least one difficulty level.',
+              [{text: 'OK', primary: true, action: hideModal}]);
+            return;
+          }
+
+          filtered = filterQuestionsSubjectWise(appState.allQuestions, selectedSubjects, selectedChapters, selectedTopics, numQ, subjectQuestionTypes, subjectDifficulties);
+          duration = parseInt(document.getElementById('subject-duration').value) || 90;
+        }
+
+        if (filtered.length === 0) {
+          hideLoadingOverlay();
+          showModal('No Questions Found',
+            'No questions match your selection criteria. Please adjust your filters and try again.',
+            [{text: 'OK', primary: true, action: hideModal}]);
+          return;
+        }
+
+        appState.examQuestions = prepareExamQuestions(filtered);
+        appState.userAnswers = appState.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
+        appState.currentQuestionIndex = 0;
+        appState.sectionFilter = 'all';
+        appState.config = {
+          duration,
+          techCount: techQ,
+          nonTechCount: nonTechQ
+        };
+
+        hideLoadingOverlay();
+        switchScreen('exam');
+        
+        // Show section toggle only in Full Test mode
+        const sectionToggle = document.getElementById('section-toggle-container');
+        if (appState.examMode === 'full') {
+          sectionToggle.style.display = 'block';
+          // Reset section filter buttons
+          document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+          document.getElementById('btn-all-sections').classList.add('active');
+        } else {
+          sectionToggle.style.display = 'none';
+        }
+        
+        startTimer(duration);
+        renderPalette();
+        renderQuestion(0);
+
+      } catch (error) {
+        hideLoadingOverlay();
+        showModal('Error',
+          `An error occurred: ${error.message}`,
+          [{text: 'OK', primary: true, action: hideModal}]);
+      }
+    }
+
+    function renderQuestion(index) {
+      const q = appState.examQuestions[index];
+      appState.userAnswers[index].visited = true;
+      appState.currentQuestionIndex = index;
+
+      document.getElementById('question-number').textContent = `Question ${index + 1} of ${appState.examQuestions.length}`;
+      document.getElementById('current-section').textContent = `ID: ${q.id} | ${q.subject || 'General'}`;
+      document.getElementById('question-text').innerHTML = q.question;
+
+      const container = document.getElementById('options-container');
+      container.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const checked = appState.userAnswers[index].selectedOption === i;
+        const div = document.createElement('div');
+        div.className = 'mcq-option';
+        div.innerHTML = `
+          <input type="radio" name="answer" id="opt-${i}" value="${i}" ${checked ? 'checked' : ''}>
+          <label for="opt-${i}"><strong>${['A', 'B', 'C', 'D'][i]}.</strong><span>${opt}</span></label>
+        `;
+        container.appendChild(div);
+      });
+
+      document.querySelectorAll('input[name="answer"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          appState.userAnswers[index].selectedOption = parseInt(e.target.value);
+          updatePalette();
+        });
+      });
+
+      updatePalette();
+      if (window.MathJax) MathJax.typesetPromise([container, document.getElementById('question-text')]).catch(err => console.error('MathJax:', err));
+    }
+
+    function renderPalette() {
+      const grid = document.getElementById('palette-grid');
+      grid.innerHTML = '';
+      
+      // Calculate section counts
+      let techCount = 0, nonTechCount = 0;
+      appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        if (section === 'Technical') techCount++;
+        else nonTechCount++;
+      });
+      
+      // Update section counts display
+      document.getElementById('non-tech-count').textContent = `Non-Tech: ${nonTechCount}`;
+      document.getElementById('tech-count').textContent = `Tech: ${techCount}`;
+      
+      // Filter questions based on current section filter
+      appState.filteredQuestionIndices = [];
+      appState.examQuestions.forEach((q, i) => {
+        const section = classifySection(q.subject);
+        const shouldShow = appState.sectionFilter === 'all' || 
+                          (appState.sectionFilter === 'Technical' && section === 'Technical') ||
+                          (appState.sectionFilter === 'Non-Technical' && section === 'Non-Technical');
+        
+        if (shouldShow) {
+          appState.filteredQuestionIndices.push(i);
+        }
+        
+        const btn = document.createElement('button');
+        btn.textContent = i + 1;
+        btn.className = 'palette-btn';
+        btn.id = `palette-${i}`;
+        btn.onclick = () => renderQuestion(i);
+        btn.style.display = shouldShow ? 'block' : 'none';
+        grid.appendChild(btn);
+      });
+    }
+    
+    function filterBySection(section) {
+      appState.sectionFilter = section;
+      
+      // Update button states
+      document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+      if (section === 'all') document.getElementById('btn-all-sections').classList.add('active');
+      else if (section === 'Non-Technical') document.getElementById('btn-non-tech').classList.add('active');
+      else if (section === 'Technical') document.getElementById('btn-tech').classList.add('active');
+      
+      // Re-render palette with filtered questions
+      renderPalette();
+      updatePalette();
+      
+      // Navigate to first visible question in filtered section
+      if (appState.filteredQuestionIndices.length > 0) {
+        const currentVisible = appState.filteredQuestionIndices.includes(appState.currentQuestionIndex);
+        if (!currentVisible) {
+          renderQuestion(appState.filteredQuestionIndices[0]);
+        }
+      }
+    }
+
+    function updatePalette() {
+      appState.userAnswers.forEach((ans, i) => {
+        const btn = document.getElementById(`palette-${i}`);
+        if (!btn) return;
+        btn.classList.remove('answered', 'not-answered', 'marked', 'current');
+
+        // Highlight current question
+        if (i === appState.currentQuestionIndex) {
+          btn.classList.add('current');
+        }
+
+        if (!ans.visited) { }
+        else if (ans.markedForReview) btn.classList.add('marked');
+        else if (ans.selectedOption !== null) btn.classList.add('answered');
+        else btn.classList.add('not-answered');
+      });
+    }
+
+    function navigateQuestion(delta) {
+      // If section filter is active, navigate within filtered questions
+      if (appState.sectionFilter !== 'all' && appState.filteredQuestionIndices.length > 0) {
+        const currentFilteredIdx = appState.filteredQuestionIndices.indexOf(appState.currentQuestionIndex);
+        const newFilteredIdx = currentFilteredIdx + delta;
+        if (newFilteredIdx >= 0 && newFilteredIdx < appState.filteredQuestionIndices.length) {
+          renderQuestion(appState.filteredQuestionIndices[newFilteredIdx]);
+        }
+      } else {
+        const newIndex = appState.currentQuestionIndex + delta;
+        if (newIndex >= 0 && newIndex < appState.examQuestions.length) renderQuestion(newIndex);
+      }
+    }
+
+    function saveAndNext() {
+      if (appState.currentQuestionIndex < appState.examQuestions.length - 1) renderQuestion(appState.currentQuestionIndex + 1);
+    }
+
+    function clearResponse() {
+      appState.userAnswers[appState.currentQuestionIndex].selectedOption = null;
+      renderQuestion(appState.currentQuestionIndex);
+    }
+
+    function markForReview() {
+      appState.userAnswers[appState.currentQuestionIndex].markedForReview = true;
+      if (appState.currentQuestionIndex < appState.examQuestions.length - 1) renderQuestion(appState.currentQuestionIndex + 1);
+    }
+
+    function startTimer(minutes) {
+      let seconds = minutes * 60;
+      appState.timerInterval = setInterval(() => {
+        seconds--;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        const timerEl = document.getElementById('timer');
+        timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+        // Smart timer warning system
+        timerEl.classList.remove('warning', 'danger');
+        if (seconds <= 60 && seconds > 30) {
+          timerEl.classList.add('warning');
+        } else if (seconds <= 30) {
+          timerEl.classList.add('danger');
+        }
+
+        if (seconds <= 0) {
+          clearInterval(appState.timerInterval);
+          appState.isAutoSubmit = true;
+          showModal('Time Up!',
+            'Your exam time has ended. Your test will be submitted automatically.',
+            [{text: 'OK', primary: true, action: () => {hideModal(); submitTest();}}]);
+        }
+      }, 1000);
+    }
+
+    function submitTest() {
+      const answered = appState.userAnswers.filter(a => a.selectedOption !== null).length;
+      const unanswered = appState.userAnswers.filter(a => a.selectedOption === null).length;
+      const marked = appState.userAnswers.filter(a => a.markedForReview).length;
+      const total = appState.examQuestions.length;
+
+      const summaryHTML = `
+        <p>Review your exam attempt before final submission:</p>
+        <div class="modal-stats">
+          <div class="modal-stat-row">
+            <span class="modal-stat-label">Total Questions</span>
+            <span class="modal-stat-value">${total}</span>
+          </div>
+          <div class="modal-stat-row">
+            <span class="modal-stat-label">Answered</span>
+            <span class="modal-stat-value answered">${answered}</span>
+          </div>
+          <div class="modal-stat-row">
+            <span class="modal-stat-label">Not Answered</span>
+            <span class="modal-stat-value not-answered">${unanswered}</span>
+          </div>
+          <div class="modal-stat-row">
+            <span class="modal-stat-label">Marked for Review</span>
+            <span class="modal-stat-value marked">${marked}</span>
+          </div>
+        </div>
+        ${unanswered > 0 ? '<p style="color: var(--color-warning); font-weight: 500;">⚠️ You have unanswered questions. Are you sure you want to submit?</p>' : '<p style="color: var(--color-success);">✓ All questions answered. Ready to submit!</p>'}
+      `;
+
+      const buttons = [];
+
+      // Only show Cancel button if this is NOT an automatic submission (time didn't run out)
+      if (!appState.isAutoSubmit) {
+        buttons.push({text: 'Cancel', primary: false, action: hideModal});
+      }
+
+      buttons.push({
+        text: appState.isAutoSubmit ? 'OK' : 'Submit Test', primary: true, action: () => {
+          hideModal();
+          clearInterval(appState.timerInterval);
+          calculateResults();
+          switchScreen('results');
+          renderResults();
+          setTimeout(() => {if (window.MathJax) MathJax.typesetPromise([document.getElementById('results-screen')]).catch(err => console.error('MathJax:', err));}, 100);
+        }
+      });
+
+      showModal('Submit Test', summaryHTML, buttons);
+    }
+
+    function calculateResults() {
+      let correct = 0, incorrect = 0, unanswered = 0, marked = 0;
+      appState.userAnswers.forEach((ans, i) => {
+        const q = appState.examQuestions[i];
+        if (ans.selectedOption === null) unanswered++;
+        else if (ans.selectedOption === q.correctAnswer) correct++;
+        else incorrect++;
+        if (ans.markedForReview) marked++;
+      });
+      appState.results = {correct, incorrect, unanswered, marked, total: appState.examQuestions.length, percentage: ((correct / appState.examQuestions.length) * 100).toFixed(2)};
+    }
+
+    function toggleResultsFilter(filterType) {
+      if (appState.resultsFilter.has(filterType)) {
+        appState.resultsFilter.delete(filterType);
+        document.querySelector(`[data-filter="${filterType}"]`).classList.remove('active');
+      } else {
+        appState.resultsFilter.add(filterType);
+        document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+      }
+      filterAndDisplayResults();
+    }
+
+    function filterAndDisplayResults() {
+      const reviewContainer = document.getElementById('questions-review');
+      reviewContainer.innerHTML = '';
+
+      appState.examQuestions.forEach((q, i) => {
+        const ans = appState.userAnswers[i];
+        const isCorrect = ans.selectedOption === q.correctAnswer;
+        const isUnanswered = ans.selectedOption === null;
+        const isMarked = ans.markedForReview;
+
+        let questionType = isUnanswered ? 'unanswered' : (isCorrect ? 'correct' : 'incorrect');
+        if (isMarked) questionType = 'marked';
+
+        if (appState.resultsFilter.size > 0 && !appState.resultsFilter.has(questionType)) return;
+
+        const div = document.createElement('div');
+        div.className = `question-review ${isCorrect ? 'correct' : 'incorrect'}`;
+        let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">ID: ${q.id}</span> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
+        html += `<div class="question-text">${q.question}</div><div style="margin-top: 16px;">`;
+        q.options.forEach((opt, j) => {
+          const isUser = ans.selectedOption === j;
+          const isCorrectOpt = j === q.correctAnswer;
+          let className = 'option-review';
+          if (isUser) className += ' user-answer';
+          if (isCorrectOpt) className += ' correct-answer';
+          html += `<div class="${className}"><strong>${['A', 'B', 'C', 'D'][j]}.</strong> ${opt} ${isUser ? '<span class="badge">Your Answer</span>' : ''} ${isCorrectOpt ? '<span class="badge success">Correct</span>' : ''}</div>`;
+        });
+        html += `</div><div class="explanation"><strong>Explanation:</strong> <span class="explanation-text">${q.explanation}</span></div>`;
+        div.innerHTML = html;
+        reviewContainer.appendChild(div);
+      });
+      
+      // Re-render MathJax for all explanations in results
+      if (window.MathJax) {
+        MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      }
+    }
+
+    function renderResults() {
+      const r = appState.results;
+      document.getElementById('score-display').textContent = `${r.correct}/${r.total}`;
+      document.getElementById('percentage-display').textContent = `${r.percentage}%`;
+      document.getElementById('correct-count').textContent = r.correct;
+      document.getElementById('incorrect-count').textContent = r.incorrect;
+      document.getElementById('unanswered-count').textContent = r.unanswered;
+      document.getElementById('marked-count').textContent = r.marked;
+
+      appState.resultsFilter.clear();
+      document.querySelectorAll('.stat-toggle').forEach(el => el.classList.remove('active'));
+      filterAndDisplayResults();
+    }
+
+    function retakeTest() {
+      appState.currentQuestionIndex = 0;
+      appState.userAnswers = [];
+      appState.isAutoSubmit = false;
+      const filtered = appState.examMode === 'full'
+        ? filterQuestionsFullTest(appState.allQuestions, appState.config.techCount || 45, appState.config.nonTechCount || 15, ['Easy', 'Medium', 'Hard'], ['Numerical', 'Theoretical', 'Conceptual'])
+        : filterQuestionsSubjectWise(appState.allQuestions, appState.selectedSubjects, appState.selectedChapters, appState.selectedTopics, appState.examQuestions.length, ['Numerical', 'Theoretical', 'Conceptual'], ['Easy', 'Medium', 'Hard']);
+      appState.examQuestions = prepareExamQuestions(filtered);
+      appState.userAnswers = appState.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
+      switchScreen('exam');
+      startTimer(appState.config.duration);
+      renderPalette();
+      renderQuestion(0);
+    }
+
+    function newTest() {
+      appState.currentQuestionIndex = 0;
+      appState.userAnswers = [];
+      appState.examQuestions = [];
+      appState.config = {};
+      appState.isAutoSubmit = false;
+      switchScreen('config');
+    }
+
+    function exportToPDF() {
+      const {jsPDF} = window.jspdf;
+      const doc = new jsPDF();
+
+      const brandRed = [185, 28, 28];
+      const darkRed = [153, 27, 27];
+      const lightRed = [220, 38, 38];
+
+      function stripLatex(text) {
+        if (!text) return '';
+        // Remove $$ and $ delimiters
+        text = text.replace(/\$\$(.*?)\$\$/g, '$1').replace(/\$(.*?)\$/g, '$1');
+        // Handle fractions
+        text = text.replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '($1/$2)');
+        // Handle sqrt
+        text = text.replace(/\\sqrt\{([^}]+)\}/g, '√($1)');
+        // Handle subscripts: I_r becomes Iᵣ, I_{ab} becomes Iₐᵦ
+        text = text.replace(/([A-Za-z])_\{([^}]+)\}/g, (match, base, sub) => base + convertToSubscript(sub));
+        text = text.replace(/([A-Za-z])_([A-Za-z0-9])/g, (match, base, sub) => base + convertToSubscript(sub));
+        // Handle superscripts: x^2 becomes x², x^{2n} becomes x²ⁿ
+        text = text.replace(/\^(\{([^}]+)\}|([0-9]+))/g, (match, full, braced, simple) => convertToSuperscript(braced || simple));
+        // Greek letters
+        text = text.replace(/\\phi/g, 'φ').replace(/\\Phi/g, 'Φ');
+        text = text.replace(/\\theta/g, 'θ').replace(/\\Theta/g, 'Θ');
+        text = text.replace(/\\omega/g, 'ω').replace(/\\Omega/g, 'Ω');
+        text = text.replace(/\\alpha/g, 'α').replace(/\\Alpha/g, 'Α');
+        text = text.replace(/\\beta/g, 'β').replace(/\\Beta/g, 'Β');
+        text = text.replace(/\\gamma/g, 'γ').replace(/\\Gamma/g, 'Γ');
+        text = text.replace(/\\delta/g, 'δ').replace(/\\Delta/g, 'Δ');
+        text = text.replace(/\\pi/g, 'π').replace(/\\Pi/g, 'Π');
+        text = text.replace(/\\sigma/g, 'σ').replace(/\\Sigma/g, 'Σ');
+        text = text.replace(/\\mu/g, 'μ').replace(/\\eta/g, 'η');
+        text = text.replace(/\\lambda/g, 'λ').replace(/\\Lambda/g, 'Λ');
+        text = text.replace(/\\rho/g, 'ρ').replace(/\\tau/g, 'τ');
+        // Math symbols
+        text = text.replace(/\\sum/g, '∑').replace(/\\prod/g, '∏');
+        text = text.replace(/\\times/g, '×').replace(/\\cdot/g, '·');
+        text = text.replace(/\\pm/g, '±').replace(/\\mp/g, '∓');
+        text = text.replace(/\\div/g, '÷').replace(/\\neq/g, '≠');
+        text = text.replace(/\\leq/g, '≤').replace(/\\geq/g, '≥');
+        text = text.replace(/\\approx/g, '≈').replace(/\\infty/g, '∞');
+        text = text.replace(/\\rightarrow/g, '→').replace(/\\leftarrow/g, '←');
+        text = text.replace(/\\degree/g, '°').replace(/\\circ/g, '°');
+        text = text.replace(/\\_/g, '_');
+        // Clean up remaining LaTeX commands and braces
+        text = text.replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '');
+        return text.trim();
+      }
+      
+      function convertToSubscript(str) {
+        const subMap = {'0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
+          'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ','o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ',
+          '+':'₊','-':'₋','=':'₌','(':'₍',')':'₎'};
+        return str.split('').map(c => subMap[c] || c).join('');
+      }
+      
+      function convertToSuperscript(str) {
+        const supMap = {'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
+          'a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ','f':'ᶠ','g':'ᵍ','h':'ʰ','i':'ⁱ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','n':'ⁿ','o':'ᵒ','p':'ᵖ','r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','x':'ˣ','y':'ʸ','z':'ᶻ',
+          '+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾'};
+        return str.split('').map(c => supMap[c] || c).join('');
+      }
+
+      let yPos = 15;
+
+      doc.setDrawColor(...brandRed);
+      doc.setLineWidth(2);
+      doc.line(10, 10, 200, 10);
+
+      const logoX = 70;
+      const logoY = 14;
+      const logoW = 70;
+      const logoH = 25;
+
+      doc.setDrawColor(...brandRed);
+      doc.setLineWidth(1);
+      doc.rect(logoX, logoY, logoW, logoH);
+
+      doc.setLineWidth(0.5);
+      doc.rect(logoX + 2, logoY + 2, logoW - 4, logoH - 4);
+
+      doc.setFillColor(...brandRed);
+      doc.rect(logoX + 4, logoY + 4, 4, logoH - 8, 'F');
+      doc.rect(logoX + logoW - 8, logoY + 4, 4, logoH - 8, 'F');
+
+      doc.rect(logoX + 4, logoY + 4, logoW - 8, 3, 'F');
+      doc.rect(logoX + 4, logoY + logoH - 7, logoW - 8, 3, 'F');
+
+      const centerX = logoX + logoW / 2;
+      doc.setFillColor(...brandRed);
+      for (let row = 0; row < 2; row++) {
+        for (let col = 0; col < 5; col++) {
+          const cx = logoX + 14 + col * 10;
+          const cy = logoY + 10 + row * 8;
+          doc.circle(cx, cy, 1.2, 'F');
+        }
+      }
+
+      const leftDiamondX = logoX + 8;
+      const rightDiamondX = logoX + logoW - 8;
+      [logoY + 9, logoY + 16].forEach(dy => {
+        doc.circle(leftDiamondX, dy, 0.6, 'F');
+        doc.circle(rightDiamondX, dy, 0.6, 'F');
+      });
+
+      yPos = logoY + logoH + 8;
+
+      doc.setTextColor(...brandRed);
+      doc.setFontSize(28);
+      doc.setFont(undefined, 'bold');
+      doc.text('Assami', 105, yPos, {align: 'center'});
+      yPos += 10;
+
+      doc.setFontSize(12);
+      doc.setTextColor(...darkRed);
+      doc.text('Mock Test Results', 105, yPos, {align: 'center'});
+      yPos += 12;
+
+      doc.setLineWidth(0.5);
+      doc.line(60, yPos, 150, yPos);
+      yPos += 10;
+
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(14);
+      doc.setFont(undefined, 'bold');
+      doc.text(`Score: ${appState.results.correct}/${appState.results.total}`, 105, yPos, {align: 'center'});
+      yPos += 8;
+
+      doc.setTextColor(...brandRed);
+      doc.setFontSize(20);
+      doc.text(`${appState.results.percentage}%`, 105, yPos, {align: 'center'});
+      yPos += 15;
+
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(20, yPos, 190, yPos);
+      yPos += 10;
+
+      doc.setTextColor(0, 0, 0);
+      appState.examQuestions.forEach((q, i) => {
+        if (yPos > 250) {
+          doc.addPage();
+          yPos = 20;
+          doc.setDrawColor(...brandRed);
+          doc.setLineWidth(1);
+          doc.line(10, 10, 200, 10);
+          doc.setTextColor(...brandRed);
+          doc.setFontSize(10);
+          doc.text('Assami - Mock Test Results', 105, 16, {align: 'center'});
+          yPos = 25;
+        }
+        const ans = appState.userAnswers[i];
+        const isCorrect = ans.selectedOption === q.correctAnswer;
+
+        doc.setFontSize(11);
+        doc.setFont(undefined, 'bold');
+        doc.setTextColor(...brandRed);
+        doc.text(`Q${i + 1}.`, 20, yPos);
+        doc.setTextColor(100, 100, 100);
+        doc.setFont(undefined, 'normal');
+        doc.text(`[${q.difficulty}]`, 32, yPos);
+        yPos += 7;
+
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(10);
+        const qText = stripLatex(q.question);
+        const qLines = doc.splitTextToSize(qText, 170);
+        doc.text(qLines, 20, yPos);
+        yPos += qLines.length * 5 + 3;
+
+        doc.setFontSize(9);
+        q.options.forEach((opt, j) => {
+          const letter = ['A', 'B', 'C', 'D'][j];
+          const isUser = ans.selectedOption === j;
+          const isCorrectOpt = j === q.correctAnswer;
+
+          if (isUser) doc.setFont(undefined, 'bold');
+          if (isCorrectOpt) doc.setTextColor(0, 128, 0);
+          else if (isUser && !isCorrect) doc.setTextColor(...lightRed);
+
+          const optText = stripLatex(opt);
+          const optLines = doc.splitTextToSize(`${letter}. ${optText}`, 165);
+          doc.text(optLines, 25, yPos);
+          yPos += optLines.length * 4 + 2;
+
+          doc.setFont(undefined, 'normal');
+          doc.setTextColor(0, 0, 0);
+        });
+
+        yPos += 2;
+        if (isCorrect) {
+          doc.setTextColor(0, 128, 0);
+          doc.text('✓ Correct', 25, yPos);
+        } else {
+          doc.setTextColor(...lightRed);
+          doc.text(`✗ Incorrect (Correct: ${['A', 'B', 'C', 'D'][q.correctAnswer]})`, 25, yPos);
+        }
+        doc.setTextColor(0, 0, 0);
+        yPos += 6;
+
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        const expText = stripLatex(q.explanation);
+        const expLines = doc.splitTextToSize(`Explanation: ${expText}`, 165);
+        doc.text(expLines, 25, yPos);
+        yPos += expLines.length * 4 + 8;
+      });
+
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(`Assami Mock Test - Page ${i} of ${pageCount}`, 105, 290, {align: 'center'});
+      }
+
+      doc.save(`Assami_Mock_Test_Results_${new Date().toISOString().split('T')[0]}.pdf`);
+    }
+
+
+
+    // === DESKTOP-ONLY DRAGGABLE THEME BUTTON ===
+    (function () {
+      const btn = document.querySelector('.theme-toggle-btn');
+      if (!btn) return;
+
+      let isDragging = false;
+      let offsetX = 0, offsetY = 0;
+
+      const DESKTOP_BREAKPOINT = 768;
+
+      // Load saved position
+      function loadSavedPosition() {
+        try {
+          const saved = JSON.parse(localStorage.getItem('themeBtnPos') || 'null');
+          if (saved && window.innerWidth > DESKTOP_BREAKPOINT) {
+            btn.style.left = saved.x + 'px';
+            btn.style.top = saved.y + 'px';
+            btn.style.right = 'auto';
+          } else {
+            resetToDefault();
+          }
+        } catch (e) {
+          resetToDefault();
+        }
+      }
+
+      function resetToDefault() {
+        btn.style.left = '';
+        btn.style.right = '20px';
+        btn.style.top = '20px';
+      }
+
+      function enableDragging() {
+        return window.innerWidth > DESKTOP_BREAKPOINT && !('ontouchstart' in window);
+      }
+
+      function startDrag(e) {
+        if (!enableDragging()) return;
+
+        e.preventDefault();
+        isDragging = true;
+        btn.classList.add('dragging');
+
+        // Get current button position
+        const rect = btn.getBoundingClientRect();
+
+        // Calculate offset from mouse to button top-left
+        offsetX = e.clientX - rect.left;
+        offsetY = e.clientY - rect.top;
+
+        // Switch to left-based positioning if currently right-based
+        if (btn.style.right && btn.style.right !== 'auto') {
+          btn.style.left = rect.left + 'px';
+          btn.style.top = rect.top + 'px';
+          btn.style.right = 'auto';
+        }
+      }
+
+      function doDrag(e) {
+        if (!isDragging) return;
+
+        e.preventDefault();
+
+        // Calculate new position
+        let newX = e.clientX - offsetX;
+        let newY = e.clientY - offsetY;
+
+        // Constrain to viewport
+        const maxX = window.innerWidth - btn.offsetWidth;
+        const maxY = window.innerHeight - btn.offsetHeight;
+
+        newX = Math.max(0, Math.min(newX, maxX));
+        newY = Math.max(0, Math.min(newY, maxY));
+
+        // Apply position directly (no transform)
+        btn.style.left = newX + 'px';
+        btn.style.top = newY + 'px';
+      }
+
+      function endDrag(e) {
+        if (!isDragging) return;
+
+        isDragging = false;
+        btn.classList.remove('dragging');
+
+        // Save position
+        if (window.innerWidth > DESKTOP_BREAKPOINT) {
+          const x = parseInt(btn.style.left) || 0;
+          const y = parseInt(btn.style.top) || 0;
+          try {
+            localStorage.setItem('themeBtnPos', JSON.stringify({x, y}));
+          } catch (e) { }
+        }
+      }
+
+      // Mouse events
+      btn.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', endDrag);
+
+      // Handle resize
+      window.addEventListener('resize', () => {
+        if (!enableDragging()) {
+          resetToDefault();
+        } else {
+          loadSavedPosition();
+        }
+      });
+
+      // Initialize
+      loadSavedPosition();
+    })();
+
+    // === DYNAMIC STATS COUNTER WITH ANIMATION ===
+    function animateNumber(elementId, target, suffix = '') {
+      const el = document.getElementById(elementId);
+      if (!el) {
+        console.log('Element not found:', elementId);
+        return;
+      }
+
+      const duration = 2000;
+      const startTime = performance.now();
+      const startValue = 0;
+
+      function easeOutQuart(t) {
+        return 1 - Math.pow(1 - t, 4);
+      }
+
+      function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOutQuart(progress);
+        const current = Math.floor(startValue + (target - startValue) * eased);
+
+        el.textContent = current + suffix;
+
+        if (progress < 1) {
+          requestAnimationFrame(update);
+        } else {
+          el.textContent = target + suffix;
+        }
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    async function loadAndAnimateStats() {
+      const questionsEl = document.getElementById('stat-questions');
+      const branchesEl = document.getElementById('stat-branches');
+      const examsEl = document.getElementById('stat-exams');
+
+      if (!questionsEl || !branchesEl || !examsEl) {
+        console.log('Stats elements not found, retrying...');
+        setTimeout(loadAndAnimateStats, 200);
+        return;
+      }
+
+      try {
+        const response = await fetch(CSV_URL);
+        const csvText = await response.text();
+        const parsed = Papa.parse(csvText, {header: true, skipEmptyLines: true});
+
+        const questions = parsed.data.length;
+        const branches = new Set();
+        const exams = new Set();
+
+        parsed.data.forEach(row => {
+          if (row.Branch && row.Branch.trim()) branches.add(row.Branch.trim());
+          if (row['Exam Type'] && row['Exam Type'].trim()) exams.add(row['Exam Type'].trim());
+          if (row['ExamType'] && row['ExamType'].trim()) exams.add(row['ExamType'].trim());
+        });
+
+        console.log('Stats loaded:', questions, branches.size, exams.size);
+
+        // Set values immediately first
+        questionsEl.textContent = '0+';
+        branchesEl.textContent = '0';
+        examsEl.textContent = '0';
+
+        // Then animate
+        setTimeout(() => {
+          animateNumber('stat-questions', questions, '+');
+          animateNumber('stat-branches', branches.size, '');
+          animateNumber('stat-exams', exams.size, '');
+        }, 100);
+
+      } catch (error) {
+        console.log('Loading default stats:', error);
+        questionsEl.textContent = '709+';
+        branchesEl.textContent = '7';
+        examsEl.textContent = '2';
+      }
+    }
+
+    // Initialize stats animation when DOM is ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(loadAndAnimateStats, 300));
+    } else {
+      setTimeout(loadAndAnimateStats, 300);
+    }
+
+    // === LOCAL VISITOR COUNTER ===
+    (function () {
+      const el = document.getElementById('visitor-number');
+      if (!el) return;
+
+      function animateCount(target) {
+        const duration = 1200;
+        const startTime = performance.now();
+        function update(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          const easeOut = 1 - Math.pow(1 - progress, 4);
+          const current = Math.floor(target * easeOut);
+          el.textContent = current.toLocaleString();
+          if (progress < 1) requestAnimationFrame(update);
+        }
+        requestAnimationFrame(update);
+      }
+
+      function updateCounter() {
+        let count = parseInt(localStorage.getItem('visitorCount') || '1000');
+        const hasVisited = localStorage.getItem('hasVisited');
+
+        if (!hasVisited) {
+          count += 1;
+          localStorage.setItem('visitorCount', count.toString());
+          localStorage.setItem('hasVisited', 'true');
+        }
+
+        animateCount(count);
+      }
+
+      setTimeout(updateCounter, 400);
+    })();
+
+
+  </script>
 </body>
 
 </html>
