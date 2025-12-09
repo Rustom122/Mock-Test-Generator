@@ -1,0 +1,817 @@
+window.AssamiApp = window.AssamiApp || {};
+
+(function(App) {
+  'use strict';
+
+  const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTjJ_eWAoVK2SXvTMvN0BM4SHo60i-0WE6UKmu4rTao2sLynOMvoQ427mHd2u9YWGeNjOYncb2S3YAf/pub?output=csv';
+
+  App.CSV_URL = CSV_URL;
+
+  App.appState = {
+    currentScreen: 'config',
+    allQuestions: [],
+    examQuestions: [],
+    currentQuestionIndex: 0,
+    userAnswers: [],
+    timerInterval: null,
+    config: {},
+    results: {},
+    examMode: 'full',
+    selectedSubjects: [],
+    selectedChapters: [],
+    selectedTopics: [],
+    isAutoSubmit: false,
+    selectedBranch: null,
+    selectedExam: null,
+    branches: [],
+    exams: [],
+    resultsFilter: new Set(),
+    sectionFilter: 'all',
+    filteredQuestionIndices: []
+  };
+
+  function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  async function fetchQuestions() {
+    const response = await fetch(CSV_URL);
+    const csvText = await response.text();
+    const parsed = Papa.parse(csvText, {header: true, skipEmptyLines: true});
+
+    function findColumn(row, possibleNames) {
+      for (let name of possibleNames) {
+        if (row[name]) return row[name];
+      }
+      const keys = Object.keys(row);
+      for (let key of keys) {
+        const normalizedKey = key.trim().toLowerCase();
+        for (let name of possibleNames) {
+          if (normalizedKey === name.toLowerCase()) return row[key];
+        }
+      }
+      return null;
+    }
+
+    if (parsed.data.length > 0) {
+      console.log('CSV Column Headers:', Object.keys(parsed.data[0]));
+      console.log('First row data:', parsed.data[0]);
+    }
+
+    return parsed.data.map((row, idx) => {
+      const question = findColumn(row, ['Question', 'question', 'Q']);
+      const optionA = findColumn(row, ['Option A', 'OptionA', 'A', 'option_a']);
+      const optionB = findColumn(row, ['Option B', 'OptionB', 'B', 'option_b']);
+      const optionC = findColumn(row, ['Option C', 'OptionC', 'C', 'option_c']);
+      const optionD = findColumn(row, ['Option D', 'OptionD', 'D', 'option_d']);
+      const correctStr = findColumn(row, ['Correct Answer', 'CorrectAnswer', 'Answer', 'correct_answer', 'Correct']);
+
+      let correctIndex = 0;
+      if (correctStr) {
+        const cleaned = correctStr.toString().trim().toUpperCase();
+        if (cleaned === 'A' || cleaned === '1') correctIndex = 0;
+        else if (cleaned === 'B' || cleaned === '2') correctIndex = 1;
+        else if (cleaned === 'C' || cleaned === '3') correctIndex = 2;
+        else if (cleaned === 'D' || cleaned === '4') correctIndex = 3;
+      }
+
+      return {
+        id: findColumn(row, ['ID', 'id', 'Id']) || idx + 1,
+        question: question || '',
+        options: [optionA || '', optionB || '', optionC || '', optionD || ''],
+        correctAnswer: correctIndex,
+        explanation: findColumn(row, ['Explanation', 'explanation', 'Explain']) || 'No explanation available.',
+        subject: findColumn(row, ['Subject', 'subject']) || 'General',
+        chapter: findColumn(row, ['Chapter', 'chapter']) || '',
+        topic: findColumn(row, ['Topic', 'topic']) || '',
+        difficulty: findColumn(row, ['Difficulty', 'difficulty', 'Level']) || 'Medium',
+        type: findColumn(row, ['Type', 'type', 'Question Type']) || 'Theoretical',
+        branch: findColumn(row, ['Branch', 'branch']) || '',
+        examType: findColumn(row, ['Exam Type', 'ExamType', 'examType']) || ''
+      };
+    }).filter(q => q.question && q.question.trim() !== '');
+  }
+
+  function loadBranchesAndExams() {
+    const allBranches = App.appState.allQuestions.map(q => q.branch).filter(Boolean).map(b => b.trim());
+    const allExams = App.appState.allQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim());
+
+    App.appState.branches = [...new Set(allBranches)].sort();
+    App.appState.exams = [...new Set(allExams)].sort();
+
+    console.log('Extracted Branches:', App.appState.branches);
+    console.log('Extracted Exams:', App.appState.exams);
+
+    populateBranchesAndExams();
+  }
+
+  function populateBranchesAndExams() {
+    const branchContainer = document.getElementById('branches-container');
+    const examContainer = document.getElementById('exams-container');
+
+    branchContainer.innerHTML = App.appState.branches.map(branch =>
+      `<div class="capsule" data-branch="${branch}" onclick="AssamiApp.selectBranch(this, '${branch}')">${branch}</div>`
+    ).join('');
+
+    examContainer.innerHTML = App.appState.exams.map(exam =>
+      `<div class="capsule" data-exam="${exam}" onclick="AssamiApp.selectExam(this, '${exam}')">${exam}</div>`
+    ).join('');
+  }
+
+  function selectBranch(el, branch) {
+    document.querySelectorAll('#branches-container .capsule').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    App.appState.selectedBranch = branch;
+    localStorage.setItem('selectedBranch', branch);
+
+    App.appState.selectedExam = null;
+    localStorage.removeItem('selectedExam');
+    document.querySelectorAll('#exams-container .capsule').forEach(c => c.classList.remove('selected'));
+
+    updateExamsForBranch(branch);
+    filterQuestionsByBranchAndExam();
+  }
+
+  function updateExamsForBranch(branch) {
+    const branchQuestions = App.appState.allQuestions.filter(q => q.branch && q.branch.trim() === branch);
+
+    const availableExams = [...new Set(
+      branchQuestions.map(q => q.examType).filter(Boolean).map(e => e.trim())
+    )].sort();
+
+    console.log('Available exams for', branch, ':', availableExams);
+
+    const examContainer = document.getElementById('exams-container');
+    examContainer.innerHTML = availableExams.map(exam =>
+      `<div class="capsule" data-exam="${exam}" onclick="AssamiApp.selectExam(this, '${exam}')">${exam}</div>`
+    ).join('');
+  }
+
+  function selectExam(el, exam) {
+    document.querySelectorAll('#exams-container .capsule').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    App.appState.selectedExam = exam;
+    localStorage.setItem('selectedExam', exam);
+    filterQuestionsByBranchAndExam();
+  }
+
+  function filterQuestionsByBranchAndExam() {
+    let filtered = App.appState.allQuestions;
+    if (App.appState.selectedBranch) {
+      filtered = filtered.filter(q => q.branch && q.branch.trim() === App.appState.selectedBranch);
+    }
+    if (App.appState.selectedExam) {
+      filtered = filtered.filter(q => q.examType && q.examType.trim() === App.appState.selectedExam);
+    }
+    App.appState.filteredQuestions = filtered;
+    console.log('Filtered questions count:', filtered.length);
+  }
+
+  function populateSubjects() {
+    let questionsToFilter = App.appState.allQuestions;
+
+    if (App.appState.selectedBranch && App.appState.selectedExam) {
+      questionsToFilter = App.appState.allQuestions.filter(q =>
+        q.branch && q.branch.trim() === App.appState.selectedBranch &&
+        q.examType && q.examType.trim() === App.appState.selectedExam
+      );
+    }
+
+    const subjects = [...new Set(questionsToFilter.map(q => q.subject).filter(Boolean))];
+    console.log('All subjects found:', subjects);
+    console.log('Total questions:', questionsToFilter.length);
+
+    const container = document.getElementById('subject-checkboxes');
+    container.innerHTML = '';
+
+    subjects.forEach((subj, idx) => {
+      const div = document.createElement('div');
+      div.className = 'checkbox-item';
+      div.innerHTML = `
+        <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
+        <label for="subj-${idx}">${subj}</label>
+      `;
+      container.appendChild(div);
+    });
+
+    App.appState.filteredQuestions = questionsToFilter;
+  }
+
+  function onSubjectChange() {
+    const checked = Array.from(document.querySelectorAll('#subject-checkboxes input:checked')).map(cb => cb.value);
+    App.appState.selectedSubjects = checked;
+
+    if (checked.length > 0) {
+      populateChapters(checked);
+      const chap = document.getElementById('chapter-selection');
+      const top = document.getElementById('topic-selection');
+      chap.style.display = 'block';
+      chap.classList.add('collapsed');
+      if (top) {top.style.display = 'block'; top.classList.add('collapsed');}
+    } else {
+      document.getElementById('chapter-selection').style.display = 'none';
+      document.getElementById('topic-selection').style.display = 'none';
+    }
+  }
+
+  function populateChapters(subjects) {
+    const chapters = [...new Set(
+      App.appState.allQuestions
+        .filter(q => subjects.includes(q.subject))
+        .map(q => q.chapter)
+        .filter(Boolean)
+    )];
+
+    const container = document.getElementById('chapter-checkboxes');
+    container.innerHTML = '';
+
+    chapters.forEach((chap, idx) => {
+      const div = document.createElement('div');
+      div.className = 'checkbox-item';
+      div.innerHTML = `
+        <input type="checkbox" id="chap-${idx}" value="${chap}" checked onchange="AssamiApp.onChapterChange()">
+        <label for="chap-${idx}">${chap}</label>
+      `;
+      container.appendChild(div);
+    });
+
+    onChapterChange();
+  }
+
+  function onChapterChange() {
+    const checked = Array.from(document.querySelectorAll('#chapter-checkboxes input:checked')).map(cb => cb.value);
+    App.appState.selectedChapters = checked;
+
+    if (checked.length > 0) {
+      populateTopics(App.appState.selectedSubjects, checked);
+      document.getElementById('topic-selection').style.display = 'block';
+    } else {
+      document.getElementById('topic-selection').style.display = 'none';
+    }
+  }
+
+  function populateTopics(subjects, chapters) {
+    const topics = [...new Set(
+      App.appState.allQuestions
+        .filter(q => subjects.includes(q.subject) && chapters.includes(q.chapter))
+        .map(q => q.topic)
+        .filter(Boolean)
+    )];
+
+    const container = document.getElementById('topic-checkboxes');
+    container.innerHTML = '';
+
+    topics.forEach((topic, idx) => {
+      const div = document.createElement('div');
+      div.className = 'checkbox-item';
+      div.innerHTML = `
+        <input type="checkbox" id="topic-${idx}" value="${topic}" checked>
+        <label for="topic-${idx}">${topic}</label>
+      `;
+      container.appendChild(div);
+    });
+  }
+
+  function populateSubjectsForBranch() {
+    if (!App.appState.selectedBranch) return;
+
+    const branchQuestions = App.appState.allQuestions.filter(q =>
+      q.branch && q.branch.trim() === App.appState.selectedBranch &&
+      q.examType && q.examType.trim() === App.appState.selectedExam
+    );
+
+    const subjects = [...new Set(branchQuestions.map(q => q.subject).filter(Boolean))];
+
+    const container = document.getElementById('subject-checkboxes');
+    container.innerHTML = '';
+
+    subjects.forEach((subj, idx) => {
+      const div = document.createElement('div');
+      div.className = 'checkbox-item';
+      div.innerHTML = `
+        <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
+        <label for="subj-${idx}">${subj}</label>
+      `;
+      container.appendChild(div);
+    });
+
+    App.appState.filteredQuestions = branchQuestions;
+  }
+
+  function proceedToConfig() {
+    const userName = document.getElementById('user-name-input').value.trim();
+
+    if (!App.appState.selectedBranch) {
+      App.showModal('Selection Required', 'Please select a branch to continue.', [
+        {text: 'OK', primary: true, action: App.hideModal}
+      ]);
+      return;
+    }
+
+    if (!App.appState.selectedExam) {
+      App.showModal('Selection Required', 'Please select an exam type to continue.', [
+        {text: 'OK', primary: true, action: App.hideModal}
+      ]);
+      return;
+    }
+
+    App.appState.userName = userName || 'Student';
+    localStorage.setItem('userName', App.appState.userName);
+
+    const examNameInput = document.getElementById('exam-name');
+    if (examNameInput && userName) {
+      examNameInput.value = `${userName}'s Mock Test`;
+    }
+
+    const configContainer = document.querySelector('.config-container');
+    let welcomeEl = document.getElementById('user-welcome-msg');
+    if (!welcomeEl) {
+      welcomeEl = document.createElement('div');
+      welcomeEl.id = 'user-welcome-msg';
+      welcomeEl.className = 'user-welcome';
+      const subtitleEl = configContainer.querySelector('.config-subtitle');
+      if (subtitleEl) {
+        subtitleEl.after(welcomeEl);
+      }
+    }
+    welcomeEl.innerHTML = `<span>Welcome, <strong>${App.appState.userName}</strong>! You selected <strong>${App.appState.selectedBranch}</strong> - <strong>${App.appState.selectedExam}</strong></span>`;
+
+    App.closeBurgerMenu();
+    App.switchScreen('config');
+
+    populateSubjectsForBranch();
+  }
+
+  function filterQuestionsFullTest(questions, techCount, nonTechCount, difficulties, types) {
+    const technicalSubjects = ['Electrical Machines', 'Power Systems', 'Control Systems', 'Power Electronics', 'Transformers', 'DC Machines', 'Induction Motors', 'Synchronous Machines', 'Network Analysis', 'Electromagnetic Fields'];
+
+    let techQuestions = questions.filter(q =>
+      technicalSubjects.some(subj => q.subject && q.subject.includes(subj)) &&
+      difficulties.includes(q.difficulty) &&
+      types.includes(q.type)
+    );
+
+    let nonTechQuestions = questions.filter(q =>
+      !technicalSubjects.some(subj => q.subject && q.subject.includes(subj)) &&
+      difficulties.includes(q.difficulty) &&
+      types.includes(q.type)
+    );
+
+    techQuestions = shuffleArray(techQuestions).slice(0, techCount);
+    nonTechQuestions = shuffleArray(nonTechQuestions).slice(0, nonTechCount);
+
+    return [...techQuestions, ...nonTechQuestions];
+  }
+
+  function filterQuestionsSubjectWise(questions, subjects, chapters, topics, count, types, difficulties) {
+    let filtered = questions.filter(q =>
+      subjects.includes(q.subject) &&
+      (chapters.length === 0 || chapters.includes(q.chapter)) &&
+      (topics.length === 0 || topics.includes(q.topic)) &&
+      difficulties.includes(q.difficulty) &&
+      types.includes(q.type)
+    );
+
+    return shuffleArray(filtered).slice(0, count);
+  }
+
+  function prepareExamQuestions(questions) {
+    return questions.map(q => {
+      const optionsWithIndex = q.options.map((opt, idx) => ({text: opt, originalIndex: idx}));
+      const shuffledOptions = shuffleArray(optionsWithIndex);
+      const newCorrectIndex = shuffledOptions.findIndex(opt => opt.originalIndex === q.correctAnswer);
+      return {
+        ...q,
+        options: shuffledOptions.map(opt => opt.text),
+        correctAnswer: newCorrectIndex
+      };
+    });
+  }
+
+  function startExam() {
+    const state = App.appState;
+
+    if (state.examMode === 'full') {
+      const techCount = parseInt(document.getElementById('tech-questions-full').value) || 45;
+      const nonTechCount = parseInt(document.getElementById('nontech-questions-full').value) || 15;
+      const duration = parseInt(document.getElementById('duration').value) || 90;
+
+      const difficulties = Array.from(document.querySelectorAll('#difficulty-checkboxes input:checked')).map(cb => cb.value);
+      const types = Array.from(document.querySelectorAll('#question-type-checkboxes input:checked')).map(cb => cb.value);
+
+      if (difficulties.length === 0 || types.length === 0) {
+        App.showModal('Configuration Error', 'Please select at least one difficulty level and question type.', [
+          {text: 'OK', primary: true, action: App.hideModal}
+        ]);
+        return;
+      }
+
+      let questionsPool = state.allQuestions;
+      if (state.selectedBranch) {
+        questionsPool = questionsPool.filter(q => q.branch && q.branch.trim() === state.selectedBranch);
+      }
+      if (state.selectedExam) {
+        questionsPool = questionsPool.filter(q => q.examType && q.examType.trim() === state.selectedExam);
+      }
+
+      const filtered = filterQuestionsFullTest(questionsPool, techCount, nonTechCount, difficulties, types);
+      state.examQuestions = prepareExamQuestions(filtered);
+      state.config = {techCount, nonTechCount, duration, difficulties, types};
+      state.config.duration = duration;
+
+    } else {
+      const selectedTopics = Array.from(document.querySelectorAll('#topic-checkboxes input:checked')).map(cb => cb.value);
+      state.selectedTopics = selectedTopics;
+
+      const count = parseInt(document.getElementById('subject-question-count')?.value) || 30;
+      const duration = parseInt(document.getElementById('subject-duration')?.value) || 60;
+
+      const difficulties = Array.from(document.querySelectorAll('#subject-difficulty-checkboxes input:checked')).map(cb => cb.value);
+      const types = Array.from(document.querySelectorAll('#subject-type-checkboxes input:checked')).map(cb => cb.value);
+
+      if (state.selectedSubjects.length === 0) {
+        App.showModal('Configuration Error', 'Please select at least one subject.', [
+          {text: 'OK', primary: true, action: App.hideModal}
+        ]);
+        return;
+      }
+
+      let questionsPool = state.allQuestions;
+      if (state.selectedBranch) {
+        questionsPool = questionsPool.filter(q => q.branch && q.branch.trim() === state.selectedBranch);
+      }
+      if (state.selectedExam) {
+        questionsPool = questionsPool.filter(q => q.examType && q.examType.trim() === state.selectedExam);
+      }
+
+      const filtered = filterQuestionsSubjectWise(questionsPool, state.selectedSubjects, state.selectedChapters, selectedTopics, count, types || ['Numerical', 'Theoretical', 'Conceptual'], difficulties || ['Easy', 'Medium', 'Hard']);
+      state.examQuestions = prepareExamQuestions(filtered);
+      state.config = {count, duration, difficulties, types};
+      state.config.duration = duration;
+    }
+
+    if (state.examQuestions.length === 0) {
+      App.showModal('No Questions Found', 'No questions match your criteria. Please adjust your settings.', [
+        {text: 'OK', primary: true, action: App.hideModal}
+      ]);
+      return;
+    }
+
+    state.userAnswers = state.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
+    state.currentQuestionIndex = 0;
+
+    App.switchScreen('exam');
+    startTimer(state.config.duration);
+    renderPalette();
+    renderQuestion(0);
+  }
+
+  function startTimer(durationMinutes) {
+    let totalSeconds = durationMinutes * 60;
+    const timerEl = document.getElementById('timer');
+
+    function updateTimer() {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      timerEl.classList.remove('warning', 'danger');
+      if (totalSeconds <= 60) {
+        timerEl.classList.add('danger');
+      } else if (totalSeconds <= 300) {
+        timerEl.classList.add('warning');
+      }
+
+      if (totalSeconds <= 0) {
+        clearInterval(App.appState.timerInterval);
+        App.appState.isAutoSubmit = true;
+        submitTest();
+      }
+
+      totalSeconds--;
+    }
+
+    updateTimer();
+    App.appState.timerInterval = setInterval(updateTimer, 1000);
+  }
+
+  function renderPalette() {
+    const state = App.appState;
+    const grid = document.getElementById('palette-grid');
+    grid.innerHTML = '';
+
+    state.examQuestions.forEach((q, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'palette-btn';
+      btn.textContent = i + 1;
+      btn.onclick = () => navigateToQuestion(i);
+      grid.appendChild(btn);
+    });
+
+    updatePalette();
+    renderSectionToggle();
+  }
+
+  function renderSectionToggle() {
+    const state = App.appState;
+    const container = document.getElementById('section-toggle-container');
+    if (!container) return;
+
+    const subjects = [...new Set(state.examQuestions.map(q => q.subject))];
+
+    let html = '<div class="section-toggle-header">Filter by Section</div><div class="section-toggle-buttons">';
+    html += `<button class="section-toggle-btn ${state.sectionFilter === 'all' ? 'active' : ''}" onclick="AssamiApp.filterBySection('all')">All</button>`;
+
+    subjects.forEach(subj => {
+      const isActive = state.sectionFilter === subj ? 'active' : '';
+      html += `<button class="section-toggle-btn ${isActive}" onclick="AssamiApp.filterBySection('${subj}')">${subj}</button>`;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  function filterBySection(section) {
+    App.appState.sectionFilter = section;
+
+    document.querySelectorAll('.section-toggle-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (section === 'all') {
+      App.appState.filteredQuestionIndices = App.appState.examQuestions.map((_, i) => i);
+    } else {
+      App.appState.filteredQuestionIndices = App.appState.examQuestions
+        .map((q, i) => q.subject === section ? i : -1)
+        .filter(i => i !== -1);
+    }
+
+    updatePaletteVisibility();
+  }
+
+  function updatePaletteVisibility() {
+    const buttons = document.querySelectorAll('#palette-grid .palette-btn');
+    const state = App.appState;
+
+    buttons.forEach((btn, i) => {
+      if (state.sectionFilter === 'all' || state.filteredQuestionIndices.includes(i)) {
+        btn.style.display = '';
+      } else {
+        btn.style.display = 'none';
+      }
+    });
+  }
+
+  function updatePalette() {
+    const state = App.appState;
+    const buttons = document.querySelectorAll('#palette-grid .palette-btn');
+
+    buttons.forEach((btn, i) => {
+      btn.classList.remove('answered', 'not-answered', 'marked', 'current');
+
+      const ans = state.userAnswers[i];
+      if (ans.markedForReview) {
+        btn.classList.add('marked');
+      } else if (ans.selectedOption !== null) {
+        btn.classList.add('answered');
+      } else if (ans.visited) {
+        btn.classList.add('not-answered');
+      }
+
+      if (i === state.currentQuestionIndex) {
+        btn.classList.add('current');
+      }
+    });
+  }
+
+  function renderQuestion(index) {
+    const state = App.appState;
+    const q = state.examQuestions[index];
+    state.currentQuestionIndex = index;
+    state.userAnswers[index].visited = true;
+
+    document.getElementById('question-number').textContent = `Question ${index + 1} of ${state.examQuestions.length}`;
+    document.getElementById('section-badge').textContent = q.subject;
+    document.getElementById('question-text').innerHTML = q.question;
+
+    const optionsContainer = document.getElementById('options-container');
+    optionsContainer.innerHTML = '';
+
+    q.options.forEach((opt, i) => {
+      const div = document.createElement('div');
+      div.className = 'mcq-option';
+      const isChecked = state.userAnswers[index].selectedOption === i ? 'checked' : '';
+      div.innerHTML = `
+        <input type="radio" name="answer" id="opt-${i}" value="${i}" ${isChecked} onchange="AssamiApp.selectAnswer(${i})">
+        <label for="opt-${i}"><strong>${['A', 'B', 'C', 'D'][i]}.</strong> <span>${opt}</span></label>
+      `;
+      optionsContainer.appendChild(div);
+    });
+
+    const markBtn = document.getElementById('mark-review-btn');
+    if (markBtn) {
+      markBtn.textContent = state.userAnswers[index].markedForReview ? 'Unmark Review' : 'Mark for Review';
+    }
+
+    updatePalette();
+
+    if (window.MathJax) {
+      MathJax.typesetPromise([document.getElementById('question-area')]).catch(err => console.error('MathJax:', err));
+    }
+  }
+
+  function selectAnswer(optionIndex) {
+    App.appState.userAnswers[App.appState.currentQuestionIndex].selectedOption = optionIndex;
+    updatePalette();
+  }
+
+  function navigateToQuestion(index) {
+    if (index >= 0 && index < App.appState.examQuestions.length) {
+      renderQuestion(index);
+    }
+  }
+
+  function prevQuestion() {
+    if (App.appState.currentQuestionIndex > 0) {
+      renderQuestion(App.appState.currentQuestionIndex - 1);
+    }
+  }
+
+  function nextQuestion() {
+    if (App.appState.currentQuestionIndex < App.appState.examQuestions.length - 1) {
+      renderQuestion(App.appState.currentQuestionIndex + 1);
+    }
+  }
+
+  function toggleMarkForReview() {
+    const state = App.appState;
+    const current = state.userAnswers[state.currentQuestionIndex];
+    current.markedForReview = !current.markedForReview;
+
+    const markBtn = document.getElementById('mark-review-btn');
+    if (markBtn) {
+      markBtn.textContent = current.markedForReview ? 'Unmark Review' : 'Mark for Review';
+    }
+
+    updatePalette();
+  }
+
+  function clearResponse() {
+    App.appState.userAnswers[App.appState.currentQuestionIndex].selectedOption = null;
+    document.querySelectorAll('input[name="answer"]').forEach(input => input.checked = false);
+    updatePalette();
+  }
+
+  function submitTest() {
+    const state = App.appState;
+    const answered = state.userAnswers.filter(a => a.selectedOption !== null).length;
+    const unanswered = state.examQuestions.length - answered;
+    const marked = state.userAnswers.filter(a => a.markedForReview).length;
+
+    const summaryHTML = `
+      <div class="modal-stats">
+        <div class="modal-stat-row">
+          <span class="modal-stat-label">Total Questions</span>
+          <span class="modal-stat-value">${state.examQuestions.length}</span>
+        </div>
+        <div class="modal-stat-row">
+          <span class="modal-stat-label">Answered</span>
+          <span class="modal-stat-value answered">${answered}</span>
+        </div>
+        <div class="modal-stat-row">
+          <span class="modal-stat-label">Unanswered</span>
+          <span class="modal-stat-value not-answered">${unanswered}</span>
+        </div>
+        <div class="modal-stat-row">
+          <span class="modal-stat-label">Marked for Review</span>
+          <span class="modal-stat-value marked">${marked}</span>
+        </div>
+      </div>
+      ${unanswered > 0 ? '<p style="color: var(--color-warning); font-weight: 500;">⚠️ You have unanswered questions. Are you sure you want to submit?</p>' : '<p style="color: var(--color-success);">✓ All questions answered. Ready to submit!</p>'}
+    `;
+
+    const buttons = [];
+
+    if (!state.isAutoSubmit) {
+      buttons.push({text: 'Cancel', primary: false, action: App.hideModal});
+    }
+
+    buttons.push({
+      text: state.isAutoSubmit ? 'OK' : 'Submit Test', primary: true, action: () => {
+        App.hideModal();
+        clearInterval(state.timerInterval);
+        App.calculateResults();
+        App.switchScreen('results');
+        App.renderResults();
+        setTimeout(() => {if (window.MathJax) MathJax.typesetPromise([document.getElementById('results-screen')]).catch(err => console.error('MathJax:', err));}, 100);
+      }
+    });
+
+    App.showModal('Submit Test', summaryHTML, buttons);
+  }
+
+  function retakeTest() {
+    const state = App.appState;
+    state.currentQuestionIndex = 0;
+    state.userAnswers = [];
+    state.isAutoSubmit = false;
+
+    const filtered = state.examMode === 'full'
+      ? filterQuestionsFullTest(state.allQuestions, state.config.techCount || 45, state.config.nonTechCount || 15, ['Easy', 'Medium', 'Hard'], ['Numerical', 'Theoretical', 'Conceptual'])
+      : filterQuestionsSubjectWise(state.allQuestions, state.selectedSubjects, state.selectedChapters, state.selectedTopics, state.examQuestions.length, ['Numerical', 'Theoretical', 'Conceptual'], ['Easy', 'Medium', 'Hard']);
+
+    state.examQuestions = prepareExamQuestions(filtered);
+    state.userAnswers = state.examQuestions.map(() => ({selectedOption: null, visited: false, markedForReview: false}));
+
+    App.switchScreen('exam');
+    startTimer(state.config.duration);
+    renderPalette();
+    renderQuestion(0);
+  }
+
+  function newTest() {
+    const state = App.appState;
+    state.currentQuestionIndex = 0;
+    state.userAnswers = [];
+    state.examQuestions = [];
+    state.config = {};
+    state.isAutoSubmit = false;
+    App.switchScreen('config');
+  }
+
+  App.shuffleArray = shuffleArray;
+  App.fetchQuestions = fetchQuestions;
+  App.loadBranchesAndExams = loadBranchesAndExams;
+  App.populateBranchesAndExams = populateBranchesAndExams;
+  App.selectBranch = selectBranch;
+  App.selectExam = selectExam;
+  App.filterQuestionsByBranchAndExam = filterQuestionsByBranchAndExam;
+  App.populateSubjects = populateSubjects;
+  App.onSubjectChange = onSubjectChange;
+  App.populateChapters = populateChapters;
+  App.onChapterChange = onChapterChange;
+  App.populateTopics = populateTopics;
+  App.populateSubjectsForBranch = populateSubjectsForBranch;
+  App.proceedToConfig = proceedToConfig;
+  App.filterQuestionsFullTest = filterQuestionsFullTest;
+  App.filterQuestionsSubjectWise = filterQuestionsSubjectWise;
+  App.prepareExamQuestions = prepareExamQuestions;
+  App.startExam = startExam;
+  App.startTimer = startTimer;
+  App.renderPalette = renderPalette;
+  App.renderSectionToggle = renderSectionToggle;
+  App.filterBySection = filterBySection;
+  App.updatePaletteVisibility = updatePaletteVisibility;
+  App.updatePalette = updatePalette;
+  App.renderQuestion = renderQuestion;
+  App.selectAnswer = selectAnswer;
+  App.navigateToQuestion = navigateToQuestion;
+  App.prevQuestion = prevQuestion;
+  App.nextQuestion = nextQuestion;
+  App.toggleMarkForReview = toggleMarkForReview;
+  App.clearResponse = clearResponse;
+  App.submitTest = submitTest;
+  App.retakeTest = retakeTest;
+  App.newTest = newTest;
+
+  function markForReview() {
+    toggleMarkForReview();
+    nextQuestion();
+  }
+
+  function saveAndNext() {
+    nextQuestion();
+  }
+
+  function navigateQuestion(direction) {
+    if (direction < 0) {
+      prevQuestion();
+    } else {
+      nextQuestion();
+    }
+  }
+
+  App.markForReview = markForReview;
+  App.saveAndNext = saveAndNext;
+  App.navigateQuestion = navigateQuestion;
+
+  window.proceedToConfig = proceedToConfig;
+  window.startExam = startExam;
+  window.prevQuestion = prevQuestion;
+  window.nextQuestion = nextQuestion;
+  window.toggleMarkForReview = toggleMarkForReview;
+  window.clearResponse = clearResponse;
+  window.submitTest = submitTest;
+  window.retakeTest = retakeTest;
+  window.newTest = newTest;
+  window.markForReview = markForReview;
+  window.saveAndNext = saveAndNext;
+  window.navigateQuestion = navigateQuestion;
+  window.filterBySection = filterBySection;
+  window.selectAnswer = selectAnswer;
+
+})(window.AssamiApp);
