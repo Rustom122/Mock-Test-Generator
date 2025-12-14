@@ -79,10 +79,7 @@ window.AssamiApp = window.AssamiApp || {};
       weakSubjects: weakSubjectsWithCounts
     };
 
-    App.showModal('Smart Retake', modalHTML, [
-      { text: 'Cancel', primary: false, action: App.hideModal },
-      { text: 'Start Retake', primary: true, action: () => executeRetake(sessionId) }
-    ]);
+    App.showModal('Smart Retake', modalHTML, []);
 
     setTimeout(() => {
       document.querySelectorAll('.retake-option').forEach(opt => {
@@ -94,12 +91,17 @@ window.AssamiApp = window.AssamiApp || {};
           this.classList.add('selected');
           this.setAttribute('aria-selected', 'true');
           
-          if (this.dataset.type === 'weak') {
+          const retakeType = this.dataset.type;
+          
+          if (retakeType === 'weak') {
             App.hideModal();
             showWeakAreasPopup(sessionId);
-          } else if (this.dataset.type === 'custom') {
+          } else if (retakeType === 'custom') {
             App.hideModal();
             showCustomExamBuilder(sessionId);
+          } else if (retakeType === 'same' || retakeType === 'new' || retakeType === 'improve') {
+            App.hideModal();
+            showRetakeConfirmationPopup(sessionId, retakeType);
           }
         });
         
@@ -110,13 +112,193 @@ window.AssamiApp = window.AssamiApp || {};
           }
         });
       });
-      
-      const firstOption = document.querySelector('.retake-option[data-type="same"]');
-      if (firstOption) {
-        firstOption.classList.add('selected');
-        firstOption.setAttribute('aria-selected', 'true');
-      }
     }, 100);
+  }
+
+  function showRetakeConfirmationPopup(sessionId, retakeType) {
+    const titles = {
+      'same': 'Same Questions (Shuffled)',
+      'new': 'All New Questions',
+      'improve': 'Improve Mode'
+    };
+    
+    const descriptions = {
+      'same': 'You will retake the test with the same questions, but the options will be shuffled in a different order.',
+      'new': 'You will get a fresh set of questions following the same exam configuration as before.',
+      'improve': 'You will focus on questions you got wrong or left unanswered, plus some new questions to help you improve.'
+    };
+    
+    const icons = {
+      'same': '🔄',
+      'new': '✨',
+      'improve': '📈'
+    };
+
+    let existingOverlay = document.getElementById('retake-confirm-overlay');
+    let existingPopup = document.getElementById('retake-confirm-popup');
+    if (existingOverlay) existingOverlay.remove();
+    if (existingPopup) existingPopup.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'retake-confirm-overlay';
+    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:10000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity 0.3s ease;';
+    
+    const popup = document.createElement('div');
+    popup.id = 'retake-confirm-popup';
+    popup.style.cssText = `
+      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+      border: 1px solid var(--color-primary);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      transform: scale(0.9);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 20px 60px rgba(185, 28, 28, 0.3);
+    `;
+    
+    popup.innerHTML = `
+      <div style="font-size: 48px; margin-bottom: 16px;">${icons[retakeType]}</div>
+      <h3 style="margin: 0 0 12px; font-size: 22px; font-weight: 700; color: var(--color-text);">${titles[retakeType]}</h3>
+      <p style="margin: 0 0 28px; font-size: 14px; color: var(--color-text-secondary); line-height: 1.6;">${descriptions[retakeType]}</p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="retake-confirm-cancel" style="
+          padding: 12px 28px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          background: transparent;
+          border: 1px solid var(--color-border);
+          color: var(--color-text-secondary);
+        ">Cancel</button>
+        <button id="retake-confirm-start" style="
+          padding: 12px 28px;
+          border-radius: 8px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+          border: none;
+          color: #fff;
+          box-shadow: 0 4px 15px rgba(185, 28, 28, 0.4);
+        ">Start Exam</button>
+      </div>
+    `;
+    
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+    
+    setTimeout(() => {
+      overlay.style.opacity = '1';
+      popup.style.transform = 'scale(1)';
+      popup.style.opacity = '1';
+    }, 10);
+    
+    const closePopup = () => {
+      overlay.style.opacity = '0';
+      popup.style.transform = 'scale(0.9)';
+      popup.style.opacity = '0';
+      setTimeout(() => {
+        overlay.remove();
+      }, 300);
+    };
+    
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) closePopup();
+    });
+    
+    document.getElementById('retake-confirm-cancel').addEventListener('click', closePopup);
+    
+    document.getElementById('retake-confirm-start').addEventListener('click', () => {
+      closePopup();
+      executeRetakeByType(sessionId, retakeType);
+    });
+  }
+
+  function executeRetakeByType(sessionId, retakeType) {
+    const session = App.Storage.getSessionById(sessionId);
+    if (!session) return;
+    
+    App.showLoadingOverlay('Preparing retake...');
+
+    setTimeout(() => {
+      try {
+        let examQuestions = [];
+        const state = App.appState;
+
+        state.selectedBranch = session.branch;
+        state.selectedExam = session.examType;
+        state.examMode = session.mode;
+
+        let questionsPool = state.allQuestions.filter(q => 
+          (!session.branch || (q.branch && q.branch.trim() === session.branch)) &&
+          (!session.examType || (q.examType && q.examType.trim() === session.examType))
+        );
+
+        switch (retakeType) {
+          case 'same':
+            examQuestions = getSameQuestions(session, questionsPool);
+            break;
+          case 'new':
+            examQuestions = getNewQuestions(session, questionsPool);
+            break;
+          case 'improve':
+            examQuestions = getImproveQuestions(session, questionsPool);
+            break;
+        }
+
+        if (examQuestions.length === 0) {
+          App.hideLoadingOverlay();
+          App.showModal('No Questions', 'Could not find enough questions for this retake configuration.', [
+            { text: 'OK', primary: true, action: App.hideModal }
+          ]);
+          return;
+        }
+
+        state.examQuestions = App.prepareExamQuestions(examQuestions);
+        state.userAnswers = state.examQuestions.map(() => ({
+          selectedOption: null, 
+          visited: false, 
+          markedForReview: false
+        }));
+        state.currentQuestionIndex = 0;
+        
+        state.evaluatedAnswers = [];
+        state.results = {};
+        
+        state.config = session.config;
+        state.config.duration = session.config.duration || 90;
+        
+        state.currentRetakeMetadata = {
+          parentSessionId: sessionId,
+          retakeType: retakeType
+        };
+
+        App.hideLoadingOverlay();
+        
+        if (typeof App.enterFullExamMode === 'function') {
+          App.enterFullExamMode();
+        }
+        state.isExamModeActive = true;
+        state.appMode = App.APP_MODES?.EXAM_CONDUCTION || 'exam';
+        
+        App.switchScreen('exam');
+        App.startTimer(state.config.duration);
+        App.renderPalette();
+        App.renderQuestion(0);
+      } catch (error) {
+        console.error('Retake error:', error);
+        App.hideLoadingOverlay();
+        App.showModal('Error', 'Failed to start retake. Please try again.', [
+          { text: 'OK', primary: true, action: App.hideModal }
+        ]);
+      }
+    }, 500);
   }
 
   function showWeakAreasPopup(sessionId) {
@@ -645,43 +827,90 @@ window.AssamiApp = window.AssamiApp || {};
     if (existingOverlay) existingOverlay.remove();
     if (existingPanel) existingPanel.remove();
     
+    const isLightMode = document.documentElement.getAttribute('data-theme') === 'light-purple';
+    
+    const themeStyles = isLightMode ? {
+      overlayBg: 'rgba(0,0,0,0.4)',
+      panelBg: 'linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%)',
+      panelShadow: '-10px 0 40px rgba(124, 58, 237, 0.15)',
+      headerBg: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08) 0%, transparent 100%)',
+      headerTitle: '#1e1b4b',
+      headerSubtitle: '#6b7280',
+      closeBtn: '#374151',
+      sectionTitle: '#1e1b4b',
+      subjectContainerBg: '#f3f4f6',
+      subjectRowBorder: '#e5e7eb',
+      subjectLabel: '#374151',
+      subjectCountBg: 'rgba(124, 58, 237, 0.1)',
+      subjectCountText: '#7c3aed',
+      inputBg: '#ffffff',
+      inputBorder: '#d1d5db',
+      inputText: '#374151',
+      footerBg: 'linear-gradient(0deg, rgba(124, 58, 237, 0.05) 0%, transparent 100%)',
+      totalLabel: '#6b7280',
+      selectedRowBg: 'rgba(124, 58, 237, 0.1)',
+      primaryColor: '#7c3aed'
+    } : {
+      overlayBg: 'rgba(0,0,0,0.7)',
+      panelBg: 'linear-gradient(180deg, #0a0a0a 0%, #111 100%)',
+      panelShadow: '-10px 0 40px rgba(185, 28, 28, 0.2)',
+      headerBg: 'linear-gradient(135deg, rgba(185, 28, 28, 0.2) 0%, transparent 100%)',
+      headerTitle: 'var(--color-text)',
+      headerSubtitle: 'var(--color-text-secondary)',
+      closeBtn: 'var(--color-text)',
+      sectionTitle: 'var(--color-text)',
+      subjectContainerBg: 'rgba(0,0,0,0.3)',
+      subjectRowBorder: 'var(--color-border)',
+      subjectLabel: 'var(--color-text)',
+      subjectCountBg: 'var(--color-secondary)',
+      subjectCountText: 'var(--color-text-secondary)',
+      inputBg: 'var(--color-surface)',
+      inputBorder: 'var(--color-border)',
+      inputText: 'var(--color-text)',
+      footerBg: 'linear-gradient(0deg, rgba(185, 28, 28, 0.1) 0%, transparent 100%)',
+      totalLabel: 'var(--color-text-secondary)',
+      selectedRowBg: 'rgba(185, 28, 28, 0.1)',
+      primaryColor: 'var(--color-primary)'
+    };
+    
     const overlay = document.createElement('div');
     overlay.id = 'custom-exam-overlay';
-    overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.7);z-index:9998;opacity:0;transition:opacity 0.3s ease;';
+    overlay.style.cssText = `position:fixed;top:0;left:0;right:0;bottom:0;background:${themeStyles.overlayBg};z-index:9998;opacity:0;transition:opacity 0.3s ease;`;
     overlay.onclick = closeCustomExamBuilder;
     
     const panel = document.createElement('div');
     panel.id = 'custom-exam-panel';
+    panel.dataset.lightMode = isLightMode ? 'true' : 'false';
     panel.style.cssText = `
       position: fixed; top: 0; right: -450px; width: 450px; max-width: 95vw; height: 100vh;
-      background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
-      border-left: 1px solid var(--color-primary);
+      background: ${themeStyles.panelBg};
+      border-left: 1px solid ${isLightMode ? '#e5e7eb' : 'var(--color-primary)'};
       z-index: 9999; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex; flex-direction: column; box-shadow: -10px 0 40px rgba(185, 28, 28, 0.2);
+      display: flex; flex-direction: column; box-shadow: ${themeStyles.panelShadow};
     `;
     
     panel.innerHTML = `
-      <div style="padding: 20px 24px; background: linear-gradient(135deg, rgba(185, 28, 28, 0.2) 0%, transparent 100%); border-bottom: 1px solid var(--color-border); display: flex; justify-content: space-between; align-items: center;">
+      <div style="padding: 20px 24px; background: ${themeStyles.headerBg}; border-bottom: 1px solid ${isLightMode ? '#e5e7eb' : 'var(--color-border)'}; display: flex; justify-content: space-between; align-items: center;">
         <div>
-          <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: var(--color-text);">Custom Exam Builder</h3>
-          <p style="margin: 4px 0 0; font-size: 12px; color: var(--color-text-secondary);">Design your perfect practice session</p>
+          <h3 style="margin: 0; font-size: 20px; font-weight: 700; color: ${themeStyles.headerTitle};">Custom Exam Builder</h3>
+          <p style="margin: 4px 0 0; font-size: 12px; color: ${themeStyles.headerSubtitle};">Design your perfect practice session</p>
         </div>
-        <button onclick="AssamiApp.closeCustomExamBuilder()" style="background: none; border: none; color: var(--color-text); font-size: 28px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
+        <button onclick="AssamiApp.closeCustomExamBuilder()" style="background: none; border: none; color: ${themeStyles.closeBtn}; font-size: 28px; cursor: pointer; padding: 0; line-height: 1;">&times;</button>
       </div>
       
       <div style="flex: 1; overflow-y: auto; padding: 20px 24px;">
         <div style="margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
             <span style="font-size: 18px;">📚</span>
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--color-text);">Select Subjects</h4>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: ${themeStyles.sectionTitle};">Select Subjects</h4>
           </div>
-          <div id="custom-subjects-container" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--color-border); border-radius: 10px; background: rgba(0,0,0,0.3);">
+          <div id="custom-subjects-container" style="max-height: 200px; overflow-y: auto; border: 1px solid ${isLightMode ? '#e5e7eb' : 'var(--color-border)'}; border-radius: 10px; background: ${themeStyles.subjectContainerBg};">
             ${allSubjects.map(subj => `
-              <div class="custom-subject-row" data-subject="${subj}" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--color-border); transition: background 0.2s;">
-                <input type="checkbox" id="subj-${subj.replace(/\s+/g, '-')}" style="width: 18px; height: 18px; accent-color: var(--color-primary); cursor: pointer;">
-                <label for="subj-${subj.replace(/\s+/g, '-')}" style="flex: 1; cursor: pointer; font-size: 13px; color: var(--color-text);">${subj}</label>
-                <span style="font-size: 11px; color: var(--color-text-secondary); background: var(--color-secondary); padding: 2px 8px; border-radius: 10px;">${subjectCounts[subj]} Qs</span>
-                <input type="number" class="custom-subject-count" min="1" max="${subjectCounts[subj]}" value="5" style="width: 55px; padding: 6px 8px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); color: var(--color-text); font-size: 12px; text-align: center;" disabled>
+              <div class="custom-subject-row" data-subject="${subj}" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid ${themeStyles.subjectRowBorder}; transition: background 0.2s;">
+                <input type="checkbox" id="subj-${subj.replace(/\s+/g, '-')}" style="width: 18px; height: 18px; accent-color: ${themeStyles.primaryColor}; cursor: pointer;">
+                <label for="subj-${subj.replace(/\s+/g, '-')}" style="flex: 1; cursor: pointer; font-size: 13px; color: ${themeStyles.subjectLabel};">${subj}</label>
+                <span style="font-size: 11px; color: ${themeStyles.subjectCountText}; background: ${themeStyles.subjectCountBg}; padding: 2px 8px; border-radius: 10px;">${subjectCounts[subj]} Qs</span>
+                <input type="number" class="custom-subject-count" min="1" max="${subjectCounts[subj]}" value="5" style="width: 55px; padding: 6px 8px; border: 1px solid ${themeStyles.inputBorder}; border-radius: 6px; background: ${themeStyles.inputBg}; color: ${themeStyles.inputText}; font-size: 12px; text-align: center;" disabled>
               </div>
             `).join('')}
           </div>
@@ -690,20 +919,20 @@ window.AssamiApp = window.AssamiApp || {};
         <div style="margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
             <span style="font-size: 18px;">🎚️</span>
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--color-text);">Difficulty Level</h4>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: ${themeStyles.sectionTitle};">Difficulty Level</h4>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(6, 214, 160, 0.1); border: 1px solid rgba(6, 214, 160, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="diff-easy" checked style="accent-color: #06d6a0;">
-              <span style="color: #06d6a0; font-size: 13px; font-weight: 500;">Easy</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(16, 185, 129, 0.1)' : 'rgba(6, 214, 160, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(16, 185, 129, 0.3)' : 'rgba(6, 214, 160, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="diff-easy" checked style="accent-color: ${isLightMode ? '#10b981' : '#06d6a0'};">
+              <span style="color: ${isLightMode ? '#059669' : '#06d6a0'}; font-size: 13px; font-weight: 500;">Easy</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(244, 162, 97, 0.1); border: 1px solid rgba(244, 162, 97, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="diff-medium" checked style="accent-color: #f4a261;">
-              <span style="color: #f4a261; font-size: 13px; font-weight: 500;">Medium</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(245, 158, 11, 0.1)' : 'rgba(244, 162, 97, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(244, 162, 97, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="diff-medium" checked style="accent-color: ${isLightMode ? '#f59e0b' : '#f4a261'};">
+              <span style="color: ${isLightMode ? '#d97706' : '#f4a261'}; font-size: 13px; font-weight: 500;">Medium</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(255, 84, 89, 0.1); border: 1px solid rgba(255, 84, 89, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="diff-hard" checked style="accent-color: #ff5459;">
-              <span style="color: #ff5459; font-size: 13px; font-weight: 500;">Hard</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 84, 89, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 84, 89, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="diff-hard" checked style="accent-color: ${isLightMode ? '#ef4444' : '#ff5459'};">
+              <span style="color: ${isLightMode ? '#dc2626' : '#ff5459'}; font-size: 13px; font-weight: 500;">Hard</span>
             </label>
           </div>
         </div>
@@ -711,20 +940,20 @@ window.AssamiApp = window.AssamiApp || {};
         <div style="margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
             <span style="font-size: 18px;">📝</span>
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--color-text);">Question Types</h4>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: ${themeStyles.sectionTitle};">Question Types</h4>
           </div>
           <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(185, 28, 28, 0.1); border: 1px solid rgba(185, 28, 28, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="type-numerical" checked style="accent-color: var(--color-primary);">
-              <span style="color: var(--color-text); font-size: 13px;">Numerical</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(124, 58, 237, 0.08)' : 'rgba(185, 28, 28, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(124, 58, 237, 0.2)' : 'rgba(185, 28, 28, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="type-numerical" checked style="accent-color: ${themeStyles.primaryColor};">
+              <span style="color: ${themeStyles.subjectLabel}; font-size: 13px;">Numerical</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(185, 28, 28, 0.1); border: 1px solid rgba(185, 28, 28, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="type-theoretical" checked style="accent-color: var(--color-primary);">
-              <span style="color: var(--color-text); font-size: 13px;">Theoretical</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(124, 58, 237, 0.08)' : 'rgba(185, 28, 28, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(124, 58, 237, 0.2)' : 'rgba(185, 28, 28, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="type-theoretical" checked style="accent-color: ${themeStyles.primaryColor};">
+              <span style="color: ${themeStyles.subjectLabel}; font-size: 13px;">Theoretical</span>
             </label>
-            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: rgba(185, 28, 28, 0.1); border: 1px solid rgba(185, 28, 28, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-              <input type="checkbox" id="type-conceptual" checked style="accent-color: var(--color-primary);">
-              <span style="color: var(--color-text); font-size: 13px;">Conceptual</span>
+            <label style="display: flex; align-items: center; gap: 8px; padding: 10px 16px; background: ${isLightMode ? 'rgba(124, 58, 237, 0.08)' : 'rgba(185, 28, 28, 0.1)'}; border: 1px solid ${isLightMode ? 'rgba(124, 58, 237, 0.2)' : 'rgba(185, 28, 28, 0.3)'}; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+              <input type="checkbox" id="type-conceptual" checked style="accent-color: ${themeStyles.primaryColor};">
+              <span style="color: ${themeStyles.subjectLabel}; font-size: 13px;">Conceptual</span>
             </label>
           </div>
         </div>
@@ -732,18 +961,18 @@ window.AssamiApp = window.AssamiApp || {};
         <div style="margin-bottom: 24px;">
           <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
             <span style="font-size: 18px;">⏱️</span>
-            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: var(--color-text);">Duration (minutes)</h4>
+            <h4 style="margin: 0; font-size: 14px; font-weight: 600; color: ${themeStyles.sectionTitle};">Duration (minutes)</h4>
           </div>
-          <input type="number" id="custom-duration" min="5" max="180" value="${session.config?.duration || 90}" style="width: 100%; padding: 12px 16px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); color: var(--color-text); font-size: 14px;">
+          <input type="number" id="custom-duration" min="5" max="180" value="${session.config?.duration || 90}" style="width: 100%; padding: 12px 16px; border: 1px solid ${themeStyles.inputBorder}; border-radius: 8px; background: ${themeStyles.inputBg}; color: ${themeStyles.inputText}; font-size: 14px;">
         </div>
       </div>
       
-      <div style="padding: 20px 24px; background: linear-gradient(0deg, rgba(185, 28, 28, 0.1) 0%, transparent 100%); border-top: 1px solid var(--color-border);">
+      <div style="padding: 20px 24px; background: ${themeStyles.footerBg}; border-top: 1px solid ${isLightMode ? '#e5e7eb' : 'var(--color-border)'};">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-          <span style="font-size: 14px; color: var(--color-text-secondary);">Total Questions:</span>
-          <span id="custom-total-count" style="font-size: 24px; font-weight: 700; color: var(--color-primary);">0</span>
+          <span style="font-size: 14px; color: ${themeStyles.totalLabel};">Total Questions:</span>
+          <span id="custom-total-count" style="font-size: 24px; font-weight: 700; color: ${themeStyles.primaryColor};">0</span>
         </div>
-        <button id="start-custom-exam-btn" onclick="AssamiApp.startCustomExam('${sessionId}')" disabled style="width: 100%; padding: 14px; background: var(--color-primary); color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; opacity: 0.5;">
+        <button id="start-custom-exam-btn" onclick="AssamiApp.startCustomExam('${sessionId}')" disabled style="width: 100%; padding: 14px; background: ${isLightMode ? '#7c3aed' : 'var(--color-primary)'}; color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; opacity: 0.5;">
           Start Custom Exam
         </button>
       </div>
@@ -758,13 +987,16 @@ window.AssamiApp = window.AssamiApp || {};
     });
     
     setTimeout(() => {
+      const panelIsLightMode = panel.dataset.lightMode === 'true';
+      const selectedBg = panelIsLightMode ? 'rgba(124, 58, 237, 0.1)' : 'rgba(185, 28, 28, 0.1)';
+      
       document.querySelectorAll('.custom-subject-row input[type="checkbox"]').forEach(cb => {
         cb.addEventListener('change', function() {
           const row = this.closest('.custom-subject-row');
           const countInput = row.querySelector('.custom-subject-count');
           countInput.disabled = !this.checked;
           if (this.checked) {
-            row.style.background = 'rgba(185, 28, 28, 0.1)';
+            row.style.background = selectedBg;
           } else {
             row.style.background = 'transparent';
           }
