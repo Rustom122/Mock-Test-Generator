@@ -409,10 +409,36 @@ window.AssamiApp = window.AssamiApp || {};
         normalizedTypes.includes(qType);
     });
 
-    techQuestions = shuffleArray(techQuestions).slice(0, techCount);
-    nonTechQuestions = shuffleArray(nonTechQuestions).slice(0, nonTechCount);
+    // Track used question IDs to prevent duplicates in the same exam
+    const usedIds = new Set();
+    
+    // Select unique tech questions based on ID
+    const shuffledTech = shuffleArray(techQuestions);
+    const uniqueTechQuestions = [];
+    for (const q of shuffledTech) {
+      const qId = String(q.id);
+      if (!usedIds.has(qId)) {
+        usedIds.add(qId);
+        uniqueTechQuestions.push(q);
+        if (uniqueTechQuestions.length >= techCount) break;
+      }
+    }
+    
+    // Select unique non-tech questions based on ID (excluding already used IDs)
+    const shuffledNonTech = shuffleArray(nonTechQuestions);
+    const uniqueNonTechQuestions = [];
+    for (const q of shuffledNonTech) {
+      const qId = String(q.id);
+      if (!usedIds.has(qId)) {
+        usedIds.add(qId);
+        uniqueNonTechQuestions.push(q);
+        if (uniqueNonTechQuestions.length >= nonTechCount) break;
+      }
+    }
 
-    return [...techQuestions, ...nonTechQuestions];
+    console.log(`[Exam] Selected ${uniqueTechQuestions.length} unique tech questions and ${uniqueNonTechQuestions.length} unique non-tech questions (no duplicate IDs)`);
+
+    return [...uniqueTechQuestions, ...uniqueNonTechQuestions];
   }
 
   function filterQuestionsSubjectWise(questions, subjects, chapters, topics, count, types, difficulties) {
@@ -429,7 +455,23 @@ window.AssamiApp = window.AssamiApp || {};
         normalizedTypes.includes(qType);
     });
 
-    return shuffleArray(filtered).slice(0, count);
+    // Track used question IDs to prevent duplicates in the same exam
+    const usedIds = new Set();
+    const shuffled = shuffleArray(filtered);
+    const uniqueQuestions = [];
+    
+    for (const q of shuffled) {
+      const qId = String(q.id);
+      if (!usedIds.has(qId)) {
+        usedIds.add(qId);
+        uniqueQuestions.push(q);
+        if (uniqueQuestions.length >= count) break;
+      }
+    }
+
+    console.log(`[Exam] Selected ${uniqueQuestions.length} unique questions for subject-wise exam (no duplicate IDs)`);
+
+    return uniqueQuestions;
   }
 
   function prepareExamQuestions(questions) {
@@ -520,6 +562,9 @@ window.AssamiApp = window.AssamiApp || {};
       const normalizedDiffs = difficulties.map(d => (d || '').trim().toLowerCase());
       const normalizedTypes = types.map(t => (t || '').trim().toLowerCase());
       
+      // Track used question IDs to prevent duplicates across all subjects
+      const usedIds = new Set();
+      
       if (state.countMode === 'custom') {
         state.selectedSubjects.forEach(subj => {
           const subjectCount = state.perSubjectCounts[subj] || 0;
@@ -533,9 +578,22 @@ window.AssamiApp = window.AssamiApp || {};
                 normalizedDiffs.includes(qDiff) &&
                 normalizedTypes.includes(qType);
             });
-            filtered.push(...shuffleArray(subjectQuestions).slice(0, subjectCount));
+            
+            // Select unique questions based on ID
+            const shuffledSubj = shuffleArray(subjectQuestions);
+            let addedCount = 0;
+            for (const q of shuffledSubj) {
+              const qId = String(q.id);
+              if (!usedIds.has(qId)) {
+                usedIds.add(qId);
+                filtered.push(q);
+                addedCount++;
+                if (addedCount >= subjectCount) break;
+              }
+            }
           }
         });
+        console.log(`[Exam] Custom mode: Selected ${filtered.length} unique questions (no duplicate IDs)`);
       } else {
         const count = parseInt(document.getElementById('subject-questions')?.value) || 30;
         filtered = filterQuestionsSubjectWise(questionsPool, state.selectedSubjects, state.selectedChapters, selectedTopics, count, types || ['Numerical', 'Theoretical', 'Conceptual'], difficulties || ['Easy', 'Medium', 'Hard']);
