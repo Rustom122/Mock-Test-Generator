@@ -114,7 +114,11 @@ window.AssamiApp = window.AssamiApp || {};
     });
 
     if (window.MathJax) {
-      MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      requestIdleCallback ? requestIdleCallback(() => {
+        MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      }) : setTimeout(() => {
+        MathJax.typesetPromise([reviewContainer]).catch(err => console.error('MathJax explanation rendering:', err));
+      }, 0);
     }
   }
 
@@ -129,7 +133,10 @@ window.AssamiApp = window.AssamiApp || {};
 
     App.appState.resultsFilter.clear();
     document.querySelectorAll('.stat-toggle').forEach(el => el.classList.remove('active'));
-    filterAndDisplayResults();
+    
+    requestAnimationFrame(() => {
+      filterAndDisplayResults();
+    });
   }
 
   function exportToPDF() {
