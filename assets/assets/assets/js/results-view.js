@@ -16,22 +16,56 @@ window.AssamiApp = window.AssamiApp || {};
 
     state.userAnswers.forEach((ans, i) => {
       const q = state.examQuestions[i];
-      const selectedOption = ans.selectedOption;
+      let selectedOption = ans.selectedOption;
       
+      // Get option IDs for reliable comparison
+      let selectedOptionId = ans.selectedOptionId || null;
+      
+      // Derive selectedOption index from selectedOptionId if missing
+      if ((selectedOption === null || selectedOption === undefined) && selectedOptionId && q.optionIds) {
+        selectedOption = q.optionIds.indexOf(selectedOptionId);
+        if (selectedOption === -1) selectedOption = null;
+      }
+      
+      // Derive selectedOptionId from selectedOption if missing
+      if (!selectedOptionId && selectedOption !== null && q.optionIds) {
+        selectedOptionId = q.optionIds[selectedOption] || null;
+      }
+      
+      // Derive correctOptionId defensively - use stored value, string correctAnswer (ID), or compute from optionIds
+      let correctOptionId = q.correctOptionId || null;
+      if (!correctOptionId) {
+        if (typeof q.correctAnswer === 'string') {
+          // q.correctAnswer is already an option ID
+          correctOptionId = q.correctAnswer;
+        } else if (q.optionIds && typeof q.correctAnswer === 'number' && q.optionIds[q.correctAnswer]) {
+          // Derive from optionIds using index
+          correctOptionId = q.optionIds[q.correctAnswer];
+        }
+      }
+      
+      // Use ID-based comparison when available, fallback to index
       let isCorrect = false;
-      if (selectedOption !== null) {
-        isCorrect = selectedOption === q.correctAnswer;
+      const hasAnswer = selectedOption !== null || selectedOptionId !== null;
+      if (hasAnswer) {
+        if (selectedOptionId && correctOptionId) {
+          isCorrect = selectedOptionId === correctOptionId;
+        } else if (selectedOption !== null) {
+          isCorrect = selectedOption === q.correctAnswer;
+        }
       }
       
       state.evaluatedAnswers.push({
         questionId: q.id,
         selectedOption: selectedOption,
+        selectedOptionId: selectedOptionId,
         correctAnswer: q.correctAnswer,
+        correctOptionId: correctOptionId,
         isCorrect: isCorrect,
         markedForReview: ans.markedForReview
       });
       
-      if (selectedOption === null) unanswered++;
+      if (!hasAnswer) unanswered++;
       else if (isCorrect) correct++;
       else incorrect++;
       if (ans.markedForReview) marked++;
@@ -83,8 +117,13 @@ window.AssamiApp = window.AssamiApp || {};
       const ans = state.userAnswers[i] || {};
       const evalResult = state.evaluatedAnswers?.[i];
       
+      // Get user selection - try index first, then ID
       const userIndex = evalResult?.selectedOption ?? ans.selectedOption ?? q.userAnswer ?? null;
-      const isUnanswered = userIndex === null || userIndex === undefined;
+      const userOptionId = evalResult?.selectedOptionId || ans.selectedOptionId || null;
+      
+      // Consider answered if we have either index or ID
+      const hasAnswer = (userIndex !== null && userIndex !== undefined) || userOptionId !== null;
+      const isUnanswered = !hasAnswer;
       
       const isCorrect = evalResult?.isCorrect ?? false;
       const isMarked = ans.markedForReview || q.markedForReview;
@@ -95,13 +134,41 @@ window.AssamiApp = window.AssamiApp || {};
       if (state.resultsFilter.size > 0 && !state.resultsFilter.has(questionType)) return;
 
       const div = document.createElement('div');
-      div.className = `question-review ${isCorrect ? 'correct' : 'incorrect'}`;
+      // Set correct class based on actual status: correct, incorrect, or unanswered
+      let statusClass = 'incorrect';
+      if (isUnanswered) {
+        statusClass = 'unanswered';
+      } else if (isCorrect) {
+        statusClass = 'correct';
+      }
+      div.className = `question-review ${statusClass}`;
       let html = `<div class="review-header"><span><strong>Q${i + 1}.</strong> <span class="badge">ID: ${q.id}</span> <span class="badge">${q.subject}</span> <span class="badge">${q.difficulty}</span></span></div>`;
       html += `<div class="question-text">${q.question}</div><div style="margin-top: 16px;">`;
       
+      // Derive correctOptionId defensively - handle stored ID, string correctAnswer (ID), or index
+      let displayCorrectOptionId = q.correctOptionId || evalResult?.correctOptionId || null;
+      if (!displayCorrectOptionId) {
+        if (typeof q.correctAnswer === 'string') {
+          displayCorrectOptionId = q.correctAnswer;
+        } else if (q.optionIds && typeof q.correctAnswer === 'number' && q.optionIds[q.correctAnswer]) {
+          displayCorrectOptionId = q.optionIds[q.correctAnswer];
+        }
+      }
+      
       q.options.forEach((opt, j) => {
-        const isUser = userIndex === j;
-        const isCorrectOpt = j === q.correctAnswer;
+        // Check if this is user's selected option - try index first, then ID
+        let isUser = userIndex === j;
+        if (!isUser && userOptionId && q.optionIds) {
+          isUser = q.optionIds[j] === userOptionId;
+        }
+        
+        // Use ID-based comparison when available, fallback to index
+        let isCorrectOpt = false;
+        if (q.optionIds && displayCorrectOptionId) {
+          isCorrectOpt = q.optionIds[j] === displayCorrectOptionId;
+        } else {
+          isCorrectOpt = j === q.correctAnswer;
+        }
         
         let className = 'option-review';
         if (isUser) className += ' user-answer';
@@ -303,7 +370,17 @@ window.AssamiApp = window.AssamiApp || {};
       }
       
       const ans = App.appState.userAnswers[i];
-      const isCorrect = ans.selectedOption === q.correctAnswer;
+      const evalResult = App.appState.evaluatedAnswers?.[i];
+      
+      // Use stored evaluation or ID-based comparison when available
+      let isCorrect = false;
+      if (evalResult?.isCorrect !== undefined) {
+        isCorrect = evalResult.isCorrect;
+      } else if (q.optionIds && q.correctOptionId && ans.selectedOption !== null) {
+        isCorrect = q.optionIds[ans.selectedOption] === q.correctOptionId;
+      } else {
+        isCorrect = ans.selectedOption === q.correctAnswer;
+      }
       
       doc.setFillColor(isCorrect ? 240 : 255, isCorrect ? 255 : 240, isCorrect ? 240 : 240);
       const qBoxHeight = 8;
@@ -333,10 +410,29 @@ window.AssamiApp = window.AssamiApp || {};
       doc.text(qLines, margin + 5, yPos);
       yPos += qLines.length * 5 + 4;
       
+      // Derive correctOptionId defensively for PDF export - handle stored ID, string correctAnswer (ID), or index
+      let pdfCorrectOptionId = q.correctOptionId || evalResult?.correctOptionId || null;
+      if (!pdfCorrectOptionId) {
+        if (typeof q.correctAnswer === 'string') {
+          // q.correctAnswer is already an option ID
+          pdfCorrectOptionId = q.correctAnswer;
+        } else if (q.optionIds && typeof q.correctAnswer === 'number' && q.optionIds[q.correctAnswer]) {
+          // Derive from optionIds using index
+          pdfCorrectOptionId = q.optionIds[q.correctAnswer];
+        }
+      }
+      
       q.options.forEach((opt, j) => {
         const letter = ['A', 'B', 'C', 'D'][j];
         const isUser = ans.selectedOption === j;
-        const isCorrectOpt = j === q.correctAnswer;
+        
+        // Use ID-based comparison when available
+        let isCorrectOpt = false;
+        if (q.optionIds && pdfCorrectOptionId) {
+          isCorrectOpt = q.optionIds[j] === pdfCorrectOptionId;
+        } else {
+          isCorrectOpt = j === q.correctAnswer;
+        }
         
         let prefix = '○';
         if (isCorrectOpt) prefix = '●';
