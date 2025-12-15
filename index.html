@@ -1521,6 +1521,61 @@
       border-radius: 3px;
     }
 
+    /* Professional Thin Scrollbars - Global */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(185, 28, 28, 0.4);
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(185, 28, 28, 0.6);
+    }
+
+    /* Exam Screen Scrollbars */
+    #exam-screen::-webkit-scrollbar,
+    .question-panel::-webkit-scrollbar,
+    .palette-grid::-webkit-scrollbar,
+    .options-container::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #exam-screen::-webkit-scrollbar-thumb,
+    .question-panel::-webkit-scrollbar-thumb,
+    .palette-grid::-webkit-scrollbar-thumb,
+    .options-container::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(185, 28, 28, 0.5), rgba(139, 21, 56, 0.5));
+      border-radius: 2px;
+    }
+
+    /* Firefox scrollbar support */
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(185, 28, 28, 0.4) transparent;
+    }
+
+    /* Light theme scrollbar */
+    [data-theme="light-purple"] ::-webkit-scrollbar-thumb {
+      background: rgba(124, 58, 237, 0.3);
+    }
+
+    [data-theme="light-purple"] ::-webkit-scrollbar-thumb:hover {
+      background: rgba(124, 58, 237, 0.5);
+    }
+
+    [data-theme="light-purple"] * {
+      scrollbar-color: rgba(124, 58, 237, 0.3) transparent;
+    }
+
     .burger-menu-panel.active {
       left: 0;
     }
@@ -1846,6 +1901,110 @@
       color: var(--color-primary);
       font-weight: bold;
       font-size: 14px;
+    }
+
+    .checkbox-item-code {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .checkbox-item-code input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+    }
+
+    .checkbox-item-code label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 14px;
+      background: var(--color-background);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-base);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+      font-weight: 600;
+      font-size: 13px;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .checkbox-item-code input[type="checkbox"]:checked+label {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+
+    .checkbox-item-code label:hover {
+      border-color: var(--color-primary);
+      transform: scale(1.02);
+    }
+
+    .checkbox-item-code label::before {
+      display: none;
+    }
+
+    .multi-subject-indicator {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      background: var(--color-warning);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 5px;
+      border-radius: 10px;
+      line-height: 1;
+      z-index: 1;
+    }
+
+    #subject-checkboxes.checkbox-grid {
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 16px;
+    }
+
+    .sub-subject-container {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(185, 28, 28, 0.05);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-base);
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .sub-subject-header {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .sub-subject-header strong {
+      color: var(--color-primary);
+    }
+
+    .sub-subject-checkboxes {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .sub-subject-item {
+      position: relative;
+    }
+
+    .sub-subject-item label {
+      padding: 10px 14px;
+      font-size: 13px;
+    }
+
+    [data-theme="light-purple"] .sub-subject-container {
+      background: rgba(124, 58, 237, 0.05);
+    }
+
+    [data-theme="light-purple"] .multi-subject-indicator {
+      background: var(--color-primary);
     }
 
     #subject-selection,
