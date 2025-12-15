@@ -122,6 +122,7 @@ window.AssamiApp = window.AssamiApp || {};
         correctAnswer: correctIndex,
         explanation: findColumn(row, ['Explanation', 'explanation', 'Explain']) || 'No explanation available.',
         subject: findColumn(row, ['Subject', 'subject']) || 'General',
+        subjectCode: findColumn(row, ['SubjectCode', 'Subject Code', 'subjectCode', 'subject_code']) || '',
         chapter: findColumn(row, ['Chapter', 'chapter']) || '',
         topic: findColumn(row, ['Topic', 'topic']) || '',
         difficulty: findColumn(row, ['Difficulty', 'difficulty', 'Level']) || 'Medium',
@@ -218,24 +219,151 @@ window.AssamiApp = window.AssamiApp || {};
       );
     }
 
-    const subjects = [...new Set(questionsToFilter.map(q => q.subject).filter(Boolean))];
-    console.log('All subjects found:', subjects);
+    const subjectCodeMap = {};
+    questionsToFilter.forEach(q => {
+      const code = (q.subjectCode || '').trim();
+      const subj = (q.subject || '').trim();
+      if (code && subj) {
+        if (!subjectCodeMap[code]) {
+          subjectCodeMap[code] = new Set();
+        }
+        subjectCodeMap[code].add(subj);
+      }
+    });
+
+    const subjectCodes = Object.keys(subjectCodeMap).sort();
+    console.log('Subject codes found:', subjectCodes);
+    console.log('Subject code mapping:', subjectCodeMap);
     console.log('Total questions:', questionsToFilter.length);
 
     const container = document.getElementById('subject-checkboxes');
     container.innerHTML = '';
 
-    subjects.forEach((subj, idx) => {
-      const div = document.createElement('div');
-      div.className = 'checkbox-item';
-      div.innerHTML = `
-        <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
-        <label for="subj-${idx}">${subj}</label>
+    if (subjectCodes.length > 0) {
+      subjectCodes.forEach((code, idx) => {
+        const subjects = Array.from(subjectCodeMap[code]);
+        const hasMultipleSubjects = subjects.length > 1;
+        const subjectNames = subjects.join(', ');
+        
+        const div = document.createElement('div');
+        div.className = 'checkbox-item-code';
+        div.innerHTML = `
+          <input type="checkbox" id="code-${idx}" value="${code}" 
+            data-subjects='${JSON.stringify(subjects)}'
+            onchange="AssamiApp.onSubjectCodeChange(this)">
+          <label for="code-${idx}" title="${subjectNames}">${code}</label>
+          ${hasMultipleSubjects ? '<span class="multi-subject-indicator">+' + subjects.length + '</span>' : ''}
+        `;
+        container.appendChild(div);
+      });
+
+      const subSubjectContainer = document.createElement('div');
+      subSubjectContainer.id = 'sub-subject-selection';
+      subSubjectContainer.className = 'sub-subject-container';
+      subSubjectContainer.style.display = 'none';
+      subSubjectContainer.innerHTML = `
+        <div class="sub-subject-header">
+          <span>Select Subject for <strong id="current-code-label"></strong></span>
+        </div>
+        <div class="sub-subject-checkboxes" id="sub-subject-checkboxes"></div>
       `;
-      container.appendChild(div);
-    });
+      container.parentNode.appendChild(subSubjectContainer);
+    } else {
+      const subjects = [...new Set(questionsToFilter.map(q => q.subject).filter(Boolean))];
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
+          <label for="subj-${idx}">${subj}</label>
+        `;
+        container.appendChild(div);
+      });
+    }
 
     App.appState.filteredQuestions = questionsToFilter;
+    App.appState.subjectCodeMap = subjectCodeMap;
+  }
+
+  function onSubjectCodeChange(checkbox) {
+    const code = checkbox.value;
+    const subjects = JSON.parse(checkbox.getAttribute('data-subjects') || '[]');
+    const subSubjectContainer = document.getElementById('sub-subject-selection');
+    
+    if (!subSubjectContainer) return;
+    
+    const subCheckboxes = document.getElementById('sub-subject-checkboxes');
+    
+    if (checkbox.checked && subjects.length > 1) {
+      document.getElementById('current-code-label').textContent = code;
+      
+      const existingForCode = subCheckboxes.querySelectorAll(`input[data-code="${code}"]`);
+      existingForCode.forEach(cb => cb.closest('.sub-subject-item')?.remove());
+      
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item sub-subject-item';
+        div.innerHTML = `
+          <input type="checkbox" id="sub-subj-${code}-${idx}" value="${subj}" 
+            data-code="${code}" checked onchange="AssamiApp.onSubSubjectChange()">
+          <label for="sub-subj-${code}-${idx}">${subj}</label>
+        `;
+        subCheckboxes.appendChild(div);
+      });
+      
+      subSubjectContainer.style.display = 'block';
+    } else if (!checkbox.checked && subjects.length > 1) {
+      const relatedCheckboxes = subCheckboxes.querySelectorAll(`input[data-code="${code}"]`);
+      relatedCheckboxes.forEach(cb => cb.closest('.sub-subject-item')?.remove());
+      
+      const remainingCheckboxes = subCheckboxes.querySelectorAll('input');
+      if (remainingCheckboxes.length === 0) {
+        subSubjectContainer.style.display = 'none';
+      }
+    }
+    
+    updateSelectedSubjectsFromCodes();
+  }
+
+  function onSubSubjectChange() {
+    updateSelectedSubjectsFromCodes();
+  }
+
+  function updateSelectedSubjectsFromCodes() {
+    const selectedSubjects = new Set();
+    
+    const checkedCodes = document.querySelectorAll('#subject-checkboxes input:checked');
+    checkedCodes.forEach(cb => {
+      const subjects = JSON.parse(cb.getAttribute('data-subjects') || '[]');
+      const code = cb.value;
+      
+      if (subjects.length === 1) {
+        selectedSubjects.add(subjects[0]);
+      } else if (subjects.length > 1) {
+        const subCheckboxes = document.querySelectorAll(`#sub-subject-checkboxes input[data-code="${code}"]:checked`);
+        subCheckboxes.forEach(subCb => {
+          selectedSubjects.add(subCb.value);
+        });
+      }
+    });
+    
+    App.appState.selectedSubjects = Array.from(selectedSubjects);
+    
+    if (App.appState.selectedSubjects.length > 0) {
+      populateChapters(App.appState.selectedSubjects);
+      const chap = document.getElementById('chapter-selection');
+      const top = document.getElementById('topic-selection');
+      chap.style.display = 'block';
+      chap.classList.add('collapsed');
+      if (top) {top.style.display = 'block'; top.classList.add('collapsed');}
+    } else {
+      document.getElementById('chapter-selection').style.display = 'none';
+      document.getElementById('topic-selection').style.display = 'none';
+    }
+
+    if (App.appState.countMode === 'custom') {
+      updatePerSubjectCountsUI();
+    }
   }
 
   function onSubjectChange() {
@@ -325,22 +453,72 @@ window.AssamiApp = window.AssamiApp || {};
       q.examType && q.examType.trim() === App.appState.selectedExam
     );
 
-    const subjects = [...new Set(branchQuestions.map(q => q.subject).filter(Boolean))];
+    const subjectCodeMap = {};
+    branchQuestions.forEach(q => {
+      const code = (q.subjectCode || '').trim();
+      const subj = (q.subject || '').trim();
+      if (code && subj) {
+        if (!subjectCodeMap[code]) {
+          subjectCodeMap[code] = new Set();
+        }
+        subjectCodeMap[code].add(subj);
+      }
+    });
+
+    const subjectCodes = Object.keys(subjectCodeMap).sort();
 
     const container = document.getElementById('subject-checkboxes');
     container.innerHTML = '';
 
-    subjects.forEach((subj, idx) => {
-      const div = document.createElement('div');
-      div.className = 'checkbox-item';
-      div.innerHTML = `
-        <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
-        <label for="subj-${idx}">${subj}</label>
+    const existingSubContainer = document.getElementById('sub-subject-selection');
+    if (existingSubContainer) {
+      existingSubContainer.remove();
+    }
+
+    if (subjectCodes.length > 0) {
+      subjectCodes.forEach((code, idx) => {
+        const subjects = Array.from(subjectCodeMap[code]);
+        const hasMultipleSubjects = subjects.length > 1;
+        const subjectNames = subjects.join(', ');
+        
+        const div = document.createElement('div');
+        div.className = 'checkbox-item-code';
+        div.innerHTML = `
+          <input type="checkbox" id="code-${idx}" value="${code}" 
+            data-subjects='${JSON.stringify(subjects)}'
+            onchange="AssamiApp.onSubjectCodeChange(this)">
+          <label for="code-${idx}" title="${subjectNames}">${code}</label>
+          ${hasMultipleSubjects ? '<span class="multi-subject-indicator">+' + subjects.length + '</span>' : ''}
+        `;
+        container.appendChild(div);
+      });
+
+      const subSubjectContainer = document.createElement('div');
+      subSubjectContainer.id = 'sub-subject-selection';
+      subSubjectContainer.className = 'sub-subject-container';
+      subSubjectContainer.style.display = 'none';
+      subSubjectContainer.innerHTML = `
+        <div class="sub-subject-header">
+          <span>Select Subject for <strong id="current-code-label"></strong></span>
+        </div>
+        <div class="sub-subject-checkboxes" id="sub-subject-checkboxes"></div>
       `;
-      container.appendChild(div);
-    });
+      container.parentNode.appendChild(subSubjectContainer);
+    } else {
+      const subjects = [...new Set(branchQuestions.map(q => q.subject).filter(Boolean))];
+      subjects.forEach((subj, idx) => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+          <input type="checkbox" id="subj-${idx}" value="${subj}" onchange="AssamiApp.onSubjectChange()">
+          <label for="subj-${idx}">${subj}</label>
+        `;
+        container.appendChild(div);
+      });
+    }
 
     App.appState.filteredQuestions = branchQuestions;
+    App.appState.subjectCodeMap = subjectCodeMap;
   }
 
   function proceedToConfig() {
@@ -1088,7 +1266,6 @@ window.AssamiApp = window.AssamiApp || {};
         
         App.switchScreen('results');
         App.renderResults();
-        setTimeout(() => {if (window.MathJax) MathJax.typesetPromise([document.getElementById('results-screen')]).catch(err => console.error('MathJax:', err));}, 100);
       }
     });
 
@@ -1144,6 +1321,9 @@ window.AssamiApp = window.AssamiApp || {};
   App.filterQuestionsByBranchAndExam = filterQuestionsByBranchAndExam;
   App.populateSubjects = populateSubjects;
   App.onSubjectChange = onSubjectChange;
+  App.onSubjectCodeChange = onSubjectCodeChange;
+  App.onSubSubjectChange = onSubSubjectChange;
+  App.updateSelectedSubjectsFromCodes = updateSelectedSubjectsFromCodes;
   App.populateChapters = populateChapters;
   App.onChapterChange = onChapterChange;
   App.populateTopics = populateTopics;
