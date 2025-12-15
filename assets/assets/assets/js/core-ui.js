@@ -216,8 +216,22 @@ window.AssamiApp = window.AssamiApp || {};
     const allChecked = Array.from(checkboxes).every(cb => cb.checked);
     checkboxes.forEach(cb => cb.checked = !allChecked);
 
-    if (type === 'subjects') App.onSubjectChange();
-    else if (type === 'chapters') App.onChapterChange();
+    if (type === 'subjects') {
+      const hasSubjectCodes = document.querySelectorAll('#subject-checkboxes .checkbox-item-code').length > 0;
+      if (hasSubjectCodes) {
+        checkboxes.forEach(cb => {
+          const subjects = JSON.parse(cb.getAttribute('data-subjects') || '[]');
+          if (subjects.length > 1 && cb.checked) {
+            App.onSubjectCodeChange(cb);
+          }
+        });
+        App.updateSelectedSubjectsFromCodes();
+      } else {
+        App.onSubjectChange();
+      }
+    } else if (type === 'chapters') {
+      App.onChapterChange();
+    }
   }
 
   function initDraggableThemeButton() {
